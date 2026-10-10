@@ -1,0 +1,559 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: #eee; font-family: "Samsung One", "Noto Sans", Arial, sans-serif; font-size: 28px; }
+#av-player { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 0; }
+#app { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 1; transform-origin: 0 0; }
+.hidden { display: none !important; }
+.screen { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; padding: 50px 80px; background: #101317; }
+.screen.transparent { background: transparent; }
+
+/* home: menu column on the left, photo untouched on the right */
+.home-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 60px; }
+.brand { font-size: 56px; font-weight: 700; letter-spacing: 1px; color: #fff; }
+.clock { font-size: 32px; color: #c7cfd8; }
+.menu { width: 520px; }
+.menu .tile { display: flex; align-items: center; width: 520px; height: 110px; margin: 0 0 18px 0; padding: 0 30px; border-radius: 16px; background: rgba(16,19,23,.55); border: 4px solid transparent; }
+.menu .tile-icon { font-size: 48px; color: #6fb3ff; width: 80px; display: inline-flex; align-items: center; justify-content: center; height: 64px; line-height: 1; flex: none; }   /* emoji and line glyphs sit on different baselines: centre them in a fixed box */
+.menu .tile-title { font-size: 36px; margin: 0; }
+.menu .tile.focused { border-color: #6fb3ff; background: rgba(39,49,61,.92); }
+.focusable.focused { border-color: #6fb3ff; }
+.home-status { position: absolute; bottom: 40px; left: 80px; color: #c7cfd8; font-size: 24px; text-shadow: 0 1px 6px #000; }
+
+/* browse */
+.browse-header { display: flex; align-items: baseline; font-size: 40px; font-weight: 600; margin-bottom: 30px; }
+.browse-header .count { margin-left: 30px; color: #9aa4b1; font-size: 28px; font-weight: 400; }
+.browse-header .hint { margin-left: auto; color: #6f7a88; font-size: 24px; font-weight: 400; }
+.browse-body { display: flex; height: 900px; }
+.browse-body > * + * { margin-left: 30px; }
+.browse-body > .hidden + * { margin-left: 0; }
+.col .empty { padding: 20px 24px; }
+.list { overflow: hidden; }
+.col { display: flex; flex-direction: column; border-radius: 14px; padding: 6px; border: 3px solid transparent; }
+.col.active { border-color: rgba(111,179,255,.6); background: rgba(255,255,255,.03); }
+.col-title { color: #6fb3ff; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; padding: 4px 22px 8px; }
+.col .list { flex: 1; }
+.countries { width: 360px; }
+.cats { width: 520px; }
+.col.compact .row { height: 60px; line-height: 60px; font-size: 26px; }
+.hdr { height: 60px; line-height: 60px; padding: 0 24px; color: #6fb3ff; font-size: 24px; letter-spacing: 1px; text-transform: uppercase; }
+.items { flex: 1; }
+.row { height: 64px; line-height: 64px; padding: 0 22px; border-radius: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 4px solid transparent; display: flex; align-items: center; }
+.row img { width: 56px; height: 56px; margin-right: 18px; object-fit: contain; border-radius: 8px; background: #000; flex: none; }
+.row .label { overflow: hidden; text-overflow: ellipsis; }
+.row .fav { color: #ffd166; margin-left: auto; }
+.row.active { background: #223042; border-color: rgba(111,179,255,.55); color: #fff; }   /* the chosen category / provider stays marked while its list is open */
+.row.focused { background: #27313d; border-color: #6fb3ff; }
+.grid { display: flex; flex-wrap: wrap; align-content: flex-start; }
+.card { width: 208px; height: 372px; margin: 0 24px 24px 0; border-radius: 14px; overflow: hidden; background: #1d232b; border: 4px solid transparent; position: relative; }
+.card img { width: 100%; height: 312px; object-fit: cover; display: block; background: #0b0d10; }
+.card .label { height: 60px; padding: 8px 10px; font-size: 20px; line-height: 22px; overflow: hidden; }
+.card .fav { position: absolute; top: 6px; right: 8px; color: #ffd166; font-size: 30px; text-shadow: 0 0 6px #000; }
+.card.focused { border-color: #6fb3ff; transform: scale(1.04); }
+.empty { color: #9aa4b1; padding: 20px; }
+
+/* detail */
+.detail-wrap { display: flex; }
+.detail-cover { width: 420px; height: 630px; margin-right: 50px; object-fit: cover; border-radius: 16px; background: #1d232b; flex: none; }
+.detail-text h1 { font-size: 46px; margin-bottom: 16px; }
+.detail-meta { color: #9aa4b1; margin-bottom: 20px; }
+.detail-plot { font-size: 26px; line-height: 36px; max-height: 216px; overflow: hidden; margin-bottom: 30px; color: #cfd6df; }
+.detail-plot.open { max-height: none !important; }   /* phone / web: a tap on the text shows all of it, another tap folds it */
+.phone .detail-plot:not(.open) { -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent); mask-image: linear-gradient(180deg, #000 70%, transparent); }
+.detail-actions { display: flex; margin-bottom: 24px; }
+.detail-actions .btn { margin-right: 20px; }
+.btn { padding: 16px 36px; border-radius: 12px; background: #1d232b; border: 4px solid transparent; font-size: 28px; }
+.btn.focused { border-color: #6fb3ff; background: #27313d; }
+.episodes { height: 440px; }
+
+/* settings */
+.settings { margin-top: 30px; width: 1200px; }
+.settings .row { height: 84px; line-height: 84px; }
+.settings .val { margin-left: auto; color: #9aa4b1; }
+
+/* player */
+#player-ui { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+.player-top { position: absolute; top: 0; left: 0; right: 0; padding: 40px 70px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(rgba(0,0,0,.75), transparent); font-size: 40px; }
+.aspect-badge { font-size: 30px; padding: 10px 24px; border-radius: 10px; background: rgba(111,179,255,.25); border: 2px solid #6fb3ff; }
+.player-bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px 70px 50px; background: linear-gradient(transparent, rgba(0,0,0,.8)); }
+#player-epg { font-size: 30px; color: #dfe6ee; margin-bottom: 20px; min-height: 36px; }
+.progress { height: 10px; background: rgba(255,255,255,.25); border-radius: 5px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: #6fb3ff; }
+.times { display: flex; justify-content: space-between; margin-top: 12px; font-size: 26px; color: #cfd6df; }
+.player-hint { margin-top: 14px; color: #8d99a7; font-size: 22px; }
+.next-up { position: absolute; right: 60px; bottom: 60px; padding: 18px 30px; background: rgba(20,26,34,.92); border: 4px solid #6fb3ff; border-radius: 16px; font-size: 30px; max-width: 46%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 6; box-shadow: 0 6px 30px rgba(0,0,0,.5); }
+.next-up .nu-lab { color: #6fb3ff; font-weight: 600; margin-right: 14px; text-transform: uppercase; font-size: 24px; }
+.next-up .nu-key { margin-left: 14px; color: #ffd166; }
+.portrait .next-up { right: 24px; bottom: 140px; font-size: 24px; padding: 12px 20px; max-width: 80%; }
+.player-msg { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); padding: 30px 50px; background: rgba(0,0,0,.8); border-radius: 16px; font-size: 34px; text-align: center; max-width: 1200px; }
+.toast { position: absolute; left: 50%; bottom: 240px; transform: translateX(-50%); padding: 20px 40px; background: rgba(20,24,30,.95); border: 2px solid #6fb3ff; border-radius: 14px; font-size: 30px; z-index: 5; }
+.loader { position: absolute; right: 80px; top: 50px; color: #6fb3ff; font-size: 28px; z-index: 5; }
+
+/* preview (zapping) mode: the screen is see-through where the video box is */
+#screen-browse { background: transparent; }
+#screen-browse::before { content: ""; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: #101317; z-index: -1; }
+#screen-browse.previewing::before { background: transparent; }
+#screen-browse.previewing .browse-header, #screen-browse.previewing .list { background: #101317; border-radius: 14px; }
+#screen-browse.previewing .browse-header { padding: 10px 24px; margin-bottom: 20px; }
+#screen-browse.previewing .items { flex: none; width: 600px; padding: 6px; }
+.preview { width: 1120px; display: flex; flex-direction: column; }
+.preview-video { width: 1120px; height: 630px; border-radius: 12px; border: 3px solid #27313d; background: transparent; }
+.preview-title { font-size: 40px; font-weight: 600; margin-top: 24px; }
+.preview-epg { font-size: 28px; color: #cfd6df; margin-top: 12px; min-height: 36px; }
+.preview-status { font-size: 26px; color: #ffd166; margin-top: 10px; min-height: 32px; }
+.preview-hint { margin-top: auto; color: #6f7a88; font-size: 24px; }
+.subtitles { position: absolute; left: 160px; right: 160px; bottom: 90px; text-align: center; font-size: 44px; line-height: 56px; color: #fff; text-shadow: 0 0 8px #000, 0 2px 4px #000, 0 0 2px #000; z-index: 3; pointer-events: none; }
+
+/* home background photo */
+#screen-home { background: linear-gradient(180deg, #12161d 0, #0a0c10 100%); }   /* the default: a plain dark gradient, no picture to load; a chosen photo fades in over it */
+/* the photo sits to the right of the menu (its subject lands in the open space), the left fades in from the dark */
+.home-bg { position: absolute !important; left: 300px; top: 0; right: 0; bottom: 0; z-index: 0 !important; background: center / cover no-repeat; opacity: 0; transition: opacity 1.4s ease; -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0, rgba(0,0,0,.35) 220px, #000 560px); mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0, rgba(0,0,0,.35) 220px, #000 560px); }
+.home-bg.in { opacity: 1; }   /* one opacity fade (composited, cheap on the TV) once the photo is decoded */
+#screen-home::after { content: ""; position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: linear-gradient(90deg, rgba(10,12,16,.7) 0, rgba(10,12,16,.55) 520px, rgba(10,12,16,.25) 800px, rgba(10,12,16,0) 1060px); z-index: 0; }
+#screen-home > * { position: relative; z-index: 1; }
+#screen-home > .home-status { position: absolute; }
+.brand { text-shadow: 0 2px 12px rgba(0,0,0,.8); }
+.tabs { margin-left: 30px; font-size: 30px; font-weight: 400; }
+.tabs span { display: inline-block; padding: 6px 22px; margin-right: 10px; border-radius: 10px; background: #1d232b; color: #9aa4b1; }
+.tabs span.on { background: #27313d; color: #fff; border: 2px solid #6fb3ff; }
+
+/* preview mode: channel list on the left, video box on the right */
+#screen-browse.previewing .browse-header .hint { display: none; }
+#screen-browse.previewing .items { flex: none; width: 600px; }
+#screen-browse.previewing .col-title { display: none; }
+.preview { width: 1130px; display: flex; flex-direction: column; }
+.preview-video { width: 1130px; height: 636px; border-radius: 0; border: none; background: transparent; }
+.preview-text { padding: 24px 0 0; }
+.preview-title { margin-top: 0; }
+.preview-hint { margin-top: auto; }
+
+/* seek marker on the timeline */
+.progress { position: relative; overflow: visible; }
+.seek-marker { position: absolute; top: -14px; width: 6px; height: 38px; margin-left: -3px; background: #ffd166; border-radius: 3px; }
+.seek-time { position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%); background: #ffd166; color: #000; font-size: 26px; font-weight: 600; padding: 6px 14px; border-radius: 8px; white-space: nowrap; }
+
+
+/* audio / subtitle menu */
+.track-menu { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; background: rgba(14,17,22,.96); border: 2px solid #6fb3ff; border-radius: 18px; padding: 30px; z-index: 6; }
+.tm-col { width: 460px; padding: 0 20px; opacity: .55; }
+.tm-col.active { opacity: 1; }
+.tm-title { font-size: 34px; font-weight: 700; color: #6fb3ff; margin-bottom: 16px; }
+.tm-item { font-size: 30px; line-height: 56px; padding: 0 16px; border-radius: 10px; border: 3px solid transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm-item.on { color: #fff; } .tm-item.dim { color: #8d99a7; }
+.tm-item.focused { background: #27313d; border-color: #6fb3ff; }
+
+/* player control row */
+.ctl-row { display: flex; margin-top: 18px; }
+.ctl-row .cbtn { padding: 12px 26px; margin-right: 14px; border-radius: 12px; background: rgba(29,35,43,.9); border: 3px solid transparent; font-size: 26px; white-space: nowrap; }
+.ctl-row .cbtn.focused { border-color: #6fb3ff; background: #27313d; }
+.progress.focused { outline: 3px solid #6fb3ff; outline-offset: 6px; border-radius: 6px; }
+.preview-btns { display: flex; margin-top: 22px; }
+.preview-btns .btn { margin-right: 16px; font-size: 26px; padding: 12px 28px; }
+
+/* seek thumbnail above the marker; subtitles move up while the control bar is visible */
+.seek-thumb { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); width: 320px; height: 180px; object-fit: cover; border-radius: 10px; border: 3px solid #ffd166; background: #000; }
+#player-ui:not(.hidden) ~ .subtitles { bottom: 340px; }
+/* cards: no scale on focus (it was clipped by the list edge) */
+.card.focused { border-color: #6fb3ff; transform: none; box-shadow: 0 0 0 4px rgba(111,179,255,.35); }
+.grid { padding: 6px 0 0 6px; }
+
+.preview-video { flex: none; }
+
+/* touch devices (web / phone): native scrolling lists */
+.touchmode .list, .touchmode #settings-body, .touchmode .tm-col { overflow-y: auto; overflow-x: hidden; touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: #3a4656 transparent; }
+.touchmode .col .list { min-height: 0; }
+.touchmode #settings-body { max-height: 900px; }
+.touchmode .tm-col { max-height: 760px; }
+.touchmode .episodes { overflow-y: auto; }
+.touchmode .list::-webkit-scrollbar, .touchmode #settings-body::-webkit-scrollbar, .touchmode .tm-col::-webkit-scrollbar { width: 8px; }
+.touchmode .list::-webkit-scrollbar-thumb, .touchmode #settings-body::-webkit-scrollbar-thumb, .touchmode .tm-col::-webkit-scrollbar-thumb { background: #3a4656; border-radius: 4px; }
+
+.home-right { display: flex; flex-direction: column; align-items: flex-end; }
+.route-chip { font-size: 24px; padding: 6px 18px; border-radius: 20px; background: rgba(16,19,23,.7); color: #cfe3ff; border: 2px solid rgba(111,179,255,.5); margin-bottom: 10px; text-shadow: none; }
+.route-chip.home { border-color: #7bd88f; color: #c9f5d2; }
+.menu .tile .tile-title small { display: block; font-size: 22px; color: #9aa4b1; margin-top: 2px; }
+.touchmode .menu .tile { height: 94px; margin-bottom: 12px; }
+.touchmode .home-header { margin-bottom: 36px; }
+
+/* ---------- phone layout (Android): same screens, finger-sized targets (S26 Ultra: 1080 design px ~ 411 dp, 48 dp ~ 126 px) ---------- */
+.phone .browse-header { font-size: 54px; margin-bottom: 20px; }
+.phone .browse-header .hint { display: none; }
+.phone .browse-header .count { font-size: 34px; }
+.phone .col-title { font-size: 30px; padding: 6px 24px 12px; }
+.phone .row, .phone .col.compact .row { height: 134px; line-height: 134px; font-size: 42px; padding: 0 26px; }
+.phone .row img { width: 88px; height: 88px; margin-right: 24px; }
+.phone .hdr { height: 80px; line-height: 80px; font-size: 32px; }
+.phone .countries { width: 440px; }
+.phone .cats { width: 600px; }
+.phone .grid .card { width: 300px; height: 540px; margin: 0 26px 26px 0; }
+.phone .grid .card img { height: 450px; }
+.phone .grid .card .label { height: 90px; font-size: 30px; line-height: 34px; padding: 10px 14px; }
+.phone .menu .tile .tile-title small { font-size: 28px; }
+.phone .detail-cover { width: 380px; height: 570px; }
+.phone .detail-text h1 { font-size: 54px; }
+.phone .detail-plot { font-size: 32px; line-height: 44px; max-height: 176px; }
+.phone .episodes { height: 520px; }
+.phone .settings { width: 1760px; }
+.phone .settings .row { height: 130px; line-height: 130px; font-size: 42px; }
+.phone #settings-body { max-height: 880px; }
+.phone .player-top { font-size: 50px; }
+.phone .aspect-badge { font-size: 36px; }
+.phone .times { font-size: 36px; }
+.phone .player-hint { display: none; }
+.phone .player-bottom { padding: 30px 60px 30px; }
+.phone .tm-col { width: 640px; max-height: 820px; }
+.phone .tm-title { font-size: 44px; }
+.phone .tm-item { font-size: 42px; line-height: 110px; }
+.phone .preview-hint { display: none; }
+.phone .preview-title { font-size: 48px; }
+.phone .toast { font-size: 40px; padding: 26px 50px; }
+.phone .subtitles { font-size: 60px; line-height: 76px; }
+
+/* seek bar: big invisible touch area around the thin bar */
+.progress::after { content: ""; position: absolute; left: -10px; right: -10px; top: -36px; bottom: -36px; }
+.touchmode .progress { cursor: pointer; }
+.touchmode .seek-marker { width: 10px; margin-left: -5px; }
+/* double-tap seek indicator */
+.dbl-ind { position: absolute; top: 380px; width: 300px; height: 300px; border-radius: 150px; background: rgba(255,255,255,.14); color: #fff; font-size: 52px; font-weight: 700; display: flex; align-items: center; justify-content: center; z-index: 4; pointer-events: none; text-shadow: 0 2px 8px #000; }
+.dbl-ind.left { left: 140px; } .dbl-ind.right { right: 140px; }
+.phone #player-ui:not(.hidden) ~ .subtitles { bottom: 300px; }
+
+/* route: a real on/off switch on the phone (home laptop <-> direct) */
+.route-chip { display: flex; align-items: center; }
+.rt-switch { position: relative; width: 120px; height: 62px; border-radius: 31px; background: #3a4656; margin-left: 22px; flex: none; transition: background .15s; }
+.rt-knob { position: absolute; top: 6px; left: 6px; width: 50px; height: 50px; border-radius: 25px; background: #fff; transition: left .15s; box-shadow: 0 2px 6px rgba(0,0,0,.5); }
+.route-chip.home .rt-switch { background: #34c759; }
+.route-chip.home .rt-knob { left: 64px; }
+.phone .route-chip { cursor: pointer; font-size: 34px; padding: 10px 14px 10px 26px; }
+.touchmode .player-bottom { padding-right: 170px; }
+
+/* YouTube-style centre controls (touch screens) */
+.center-ctl { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 3; }
+.cc-btn { pointer-events: auto; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,.45); cursor: pointer; }
+.cc-btn svg { width: 64%; height: 64%; }
+.cc-play { width: 200px; height: 200px; margin: 0 150px; }
+.cc-back, .cc-fwd { width: 140px; height: 140px; }
+.cc-play .ic-play { display: none; } .cc-play.paused .ic-play { display: block; } .cc-play.paused .ic-pause { display: none; }
+.cc-play .ic-play { margin-left: 8%; }
+
+/* ===================== phone held upright: 1080x1920 canvas (body.portrait, set by platform.js only) ===================== */
+.portrait #app { width: 1080px; height: 1920px; }   /* real height set by platform.js */
+.portrait .screen, .portrait #player-ui, .portrait .center-ctl { width: 1080px; height: 100%; }
+.portrait .screen { padding: 60px 70px 50px; }
+
+/* home: the photo as a banner on top (faces stay visible), menu underneath */
+.portrait #screen-home { background: linear-gradient(180deg, #12161d 0, #0a0c10 100%); }
+.portrait .home-bg { left: 0; bottom: auto; height: 640px; background-position: center top; background-size: cover; -webkit-mask-image: none; mask-image: none; }
+.portrait #screen-home::after { width: 1080px; height: 100%; background: linear-gradient(180deg, rgba(8,10,14,.6) 0, rgba(8,10,14,0) 240px, rgba(8,10,14,0) 420px, #000 608px, #000 100%); }
+.portrait .home-header { margin-bottom: 0; flex-direction: column; align-items: stretch; }
+.portrait .brand { font-size: 66px; margin-bottom: 20px; }
+.portrait .home-right { flex-direction: column; align-items: flex-start; }
+.portrait .route-chip { margin-bottom: 14px; white-space: nowrap; }
+.portrait .clock { font-size: 34px; color: #fff; text-shadow: 0 2px 10px #000, 0 0 4px #000; }
+.portrait #screen-home > #home-tiles { position: absolute; left: 70px; right: 70px; top: 660px; width: auto; }
+.portrait .menu .tile { width: 100%; height: 150px; margin-bottom: 22px; padding: 0 40px; background: rgba(29,35,43,.85); }
+.portrait .menu .tile-icon { font-size: 60px; width: 110px; }
+.portrait .menu .tile-title { font-size: 48px; }
+.portrait .menu .tile .tile-title small { font-size: 30px; }
+.portrait #screen-home > .home-status { left: 70px; right: 170px; bottom: 60px; font-size: 30px; }
+
+/* browse: one column at a time (country > provider > channels); Back goes one level up */
+.portrait .browse-header { flex-wrap: wrap; font-size: 50px; margin-bottom: 24px; }
+.portrait .browse-header .tabs { margin: 16px 0 0; width: 100%; }
+.portrait .browse-header .tabs span { padding: 12px 34px; font-size: 38px; }
+.portrait #screen-browse { display: flex; flex-direction: column; }
+.portrait .browse-body { flex: 1; height: auto; min-height: 0; flex-direction: column; }
+.portrait .browse-body > * + * { margin-left: 0; }
+.portrait #screen-browse .col { width: 100% !important; flex: 1; min-height: 0; }
+.portrait #screen-browse:not(.previewing) .col.countries:not(.active),
+.portrait #screen-browse:not(.previewing) .col.cats:not(.active),
+.portrait #screen-browse:not(.previewing) .col.countries.active:not(.hidden) ~ .col.items,
+.portrait #screen-browse:not(.previewing) .col.cats.active:not(.hidden) ~ .col.items { display: none !important; }
+.portrait .grid .card { width: 276px; height: 506px; margin: 0 20px 22px 0; }
+.portrait .grid .card img { height: 414px; }
+/* preview: video on top, channel list underneath */
+.portrait #screen-browse.previewing .browse-body { flex-direction: column; }
+.portrait #screen-browse.previewing .preview { order: -1; width: 100%; flex: none; margin: 0 0 24px; }
+.portrait #screen-browse.previewing .preview-video { width: 940px; height: 529px; }
+.portrait #screen-browse.previewing .items { width: 100%; flex: 1; min-height: 0; }
+.portrait .preview-text { padding: 20px 0 0; }
+.portrait .preview-btns { flex-wrap: wrap; }
+.portrait .preview-btns .btn { font-size: 34px; padding: 18px 30px; margin-bottom: 12px; }
+
+/* detail: cover, text and episodes stacked */
+.portrait .detail-wrap { flex-direction: column; height: 100%; }
+.portrait .detail-cover { width: 380px; height: 570px; margin: 0 auto 30px; }
+.portrait .detail-text { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.portrait .detail-text h1 { font-size: 52px; }
+.portrait .detail-plot { max-height: 220px; }
+.portrait .detail-actions { flex-wrap: wrap; }
+.portrait .detail-actions .btn { margin-bottom: 16px; font-size: 34px; padding: 20px 30px; }
+.portrait .episodes { flex: 1; height: auto; min-height: 0; }
+
+/* settings */
+.portrait #screen-settings { display: flex; flex-direction: column; }
+.portrait .settings { width: 100%; flex: 1; min-height: 0; }
+.portrait #settings-body { max-height: none; }
+.portrait .settings .row { display: block; height: auto; min-height: 130px; line-height: 1.25; padding: 22px 26px; white-space: normal; font-size: 42px; }
+.portrait .settings .row .label { display: block; overflow: visible; }
+.portrait .settings .val { display: block; margin: 6px 0 0; font-size: 34px; white-space: normal; overflow-wrap: anywhere; }
+
+/* player: video centred, bars above and below it */
+.portrait .player-top { padding: 60px 50px 40px; font-size: 44px; flex-wrap: wrap; }
+.portrait .player-bottom { padding: 30px 50px 40px; padding-right: 160px; }
+.portrait .ctl-row { flex-wrap: wrap; }
+.portrait .ctl-row .cbtn { margin-bottom: 16px; font-size: 34px; padding: 32px 30px; }
+.portrait .cc-play { margin: 0 110px; }
+.portrait .dbl-ind { top: calc(50% - 150px); }
+.portrait .dbl-ind.left { left: 60px; } .portrait .dbl-ind.right { right: 60px; }
+.portrait .player-msg { max-width: 940px; }
+.portrait .track-menu { padding: 26px; }
+.portrait .tm-col { width: 900px; max-height: 1400px; }
+/* just inside the bottom edge of a centred 16:9 picture (1080x608) */
+.portrait .subtitles { left: 50px; right: 50px; bottom: calc(50% - 284px); font-size: 52px; line-height: 66px; }
+.portrait #player-ui:not(.hidden) ~ .subtitles { bottom: calc(50% - 284px); }
+.portrait .toast { max-width: 960px; text-align: center; bottom: 300px; }
+.phone #av-player { display: none; }   /* the TV player object; the phone plays natively behind the page */
+
+/* ---------- downloads ---------- */
+.rdl { margin-left: auto; flex: none; min-width: 110px; padding: 0 18px; text-align: center; border-radius: 10px; color: #9aa4b1; border: 3px solid transparent; line-height: 1.7; font-size: 26px; }
+.rdl.on { color: #7bd88f; }
+.rdl.focused { border-color: #6fb3ff; background: #27313d; color: #fff; }
+.row.active .rdl.focused { border-color: #6fb3ff; }
+.dl-info { color: #9aa4b1; font-size: 24px; margin-top: 14px; max-width: 1700px; }
+.dl-list { margin-top: 24px; }
+#dl-body { max-height: 820px; overflow: hidden; }
+#dl-body .row { height: auto; min-height: 100px; line-height: 1.25; padding: 14px 22px; white-space: normal; }
+.dlrow .label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dlrow .label small { display: block; font-size: 22px; color: #9aa4b1; margin-top: 4px; }
+.dlbar { flex: none; width: 260px; height: 12px; margin: 0 28px; border-radius: 6px; background: rgba(255,255,255,.14); overflow: hidden; }
+.dlbar i { display: block; height: 100%; background: #6fb3ff; }
+.dlbar.done i { background: #7bd88f; }
+.rbtn { flex: none; padding: 10px 26px; border-radius: 10px; background: #1d232b; border: 3px solid transparent; font-size: 26px; }
+.rbtn.focused { border-color: #ff8a80; background: #3a2424; color: #fff; }
+.touchmode #dl-body { overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; }
+.phone #dl-body .row { min-height: 140px; font-size: 40px; }
+.phone .dlrow .label small { font-size: 30px; }
+.phone .rbtn, .phone .rdl { font-size: 34px; padding: 18px 30px; }
+.portrait #screen-downloads { display: flex; flex-direction: column; }
+.portrait #dl-body { flex: 1; max-height: none; min-height: 0; }
+.portrait .dlrow { flex-wrap: wrap; }
+.portrait .dlrow .label { flex: 1 1 100%; white-space: normal; }
+.portrait .dlbar { flex: 1; margin: 18px 24px 6px 0; }
+.portrait .dl-info { font-size: 30px; }
+.dlrow .mbtn { margin-right: 14px; }
+#dl-body .hdr { color: #6fb3ff; margin-top: 10px; }
+#dl-body .opt { min-height: 80px; }
+.portrait .dlrow .rbtn { margin-top: 12px; }
+/* question dialog (delete the finished download?) */
+.ask { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 9; width: 1100px; padding: 44px 50px; border-radius: 18px; background: rgba(14,17,22,.97); border: 2px solid #6fb3ff; text-align: center; }
+.ask-text { font-size: 38px; line-height: 1.3; margin-bottom: 34px; }
+.ask-btns { display: flex; justify-content: center; }
+.ask-btns .btn { margin: 0 14px; min-width: 220px; font-size: 34px; }
+.portrait .ask { width: 960px; }
+/* downloads on the phone: title, status, bar, then buttons - stacked, never overlapping */
+.phone #dl-body .dlrow { display: block; height: auto; min-height: 0; line-height: 1.3; padding: 22px 26px; white-space: normal; }
+.phone .dlrow .label { display: block; white-space: normal; overflow: visible; }
+.phone .dlrow .label small { display: block; margin-top: 8px; white-space: normal; }
+.phone .dlbar { display: block; width: auto; margin: 18px 0 18px; height: 14px; }
+.phone .dlrow .rbtn { display: inline-block; margin: 0 16px 0 0; }
+
+/* ===== Downloads: Netflix-style offline cards ===== */
+#dl-body .dlcard { display: flex; align-items: center; height: auto; min-height: 0; line-height: 1.25; padding: 16px 20px; margin-bottom: 14px; white-space: normal; border-radius: 16px; background: #171c23; }
+#dl-body .dlcard.focused { background: #222b36; }
+#dl-body .dlcard.active { background: #1c232c; border-color: transparent; }
+.dl-poster { flex: none; width: 112px; height: 168px; object-fit: cover; border-radius: 10px; background: #0b0d10; margin-right: 26px; }
+.dl-main { flex: 1; min-width: 0; }
+.dl-title { font-size: 34px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-sub { font-size: 26px; color: #cfd6df; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-line { font-size: 24px; color: #9aa4b1; margin-top: 10px; }
+.dl-line.ok { color: #7bd88f; }
+.dlcard .dlbar { display: block; width: auto; height: 8px; margin: 12px 0 0; border-radius: 4px; }
+.dl-play, .dl-ring { flex: none; width: 96px; height: 96px; margin: 0 18px 0 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.dl-play { background: #fff; color: #111; font-size: 42px; padding-left: 6px; }
+.dl-ring { background: conic-gradient(#6fb3ff calc(var(--p) * 1%), rgba(255,255,255,.16) 0); position: relative; }
+.dl-ring::before { content: ""; position: absolute; left: 8px; top: 8px; right: 8px; bottom: 8px; border-radius: 50%; background: #171c23; }
+.dlcard.focused .dl-ring::before { background: #222b36; }
+.dl-ring span { position: relative; font-size: 24px; font-weight: 600; color: #fff; }
+.dl-more { flex: none; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 44px; color: #cfd6df; border: 3px solid transparent; }
+.dl-more.focused { border-color: #6fb3ff; background: #27313d; color: #fff; }
+.dlcard.focused .dl-play { box-shadow: 0 0 0 4px #6fb3ff; }
+#dl-body .opt { min-height: 0; height: auto; padding: 22px 28px; line-height: 1.3; font-size: 32px; border-radius: 12px; }
+.dl-empty { white-space: pre-line; line-height: 1.5; font-size: 30px; padding: 40px 10px; }
+/* phone: bigger touch targets, same layout */
+.phone #dl-body .dlcard { padding: 22px 22px; }
+.phone .dl-poster { width: 150px; height: 225px; }
+.phone .dl-title { font-size: 44px; }
+.phone .dl-sub { font-size: 34px; }
+.phone .dl-line { font-size: 30px; }
+.phone .dl-play, .phone .dl-ring { width: 120px; height: 120px; }
+.phone .dl-ring span { font-size: 30px; }
+.phone .dl-more { width: 96px; height: 96px; font-size: 56px; }
+.phone #dl-body .opt { font-size: 42px; padding: 30px 32px; }
+.portrait .dl-title, .portrait .dl-sub { white-space: normal; }
+.portrait .dl-play, .portrait .dl-ring { margin-left: 14px; }
+.route-chip.focused { border-color: #6fb3ff; box-shadow: 0 0 0 4px rgba(111,179,255,.45); }
+/* the home/direct switch looks the same on the TV as on the phone */
+body:not(.touchmode) .route-chip { font-size: 34px; padding: 10px 14px 10px 26px; }
+.dl-folder { flex: none; width: 112px; height: 112px; margin-right: 26px; border-radius: 16px; background: #0f1318; display: flex; align-items: center; justify-content: center; font-size: 60px; }
+.phone .dl-folder { width: 150px; height: 150px; font-size: 76px; }
+/* messages never block buttons: taps go through, and in the player they sit at the top, away from the controls */
+.toast { pointer-events: none; }
+#player-ui:not(.hidden) ~ .toast { bottom: auto; top: 170px; }
+.portrait #player-ui:not(.hidden) ~ .toast { top: 250px; }
+
+/* search: keyboard left, results right (TV); text box over the results (phone / web) */
+#screen-search h1 { margin-bottom: 24px; }
+.sr-wrap { display: flex; height: 860px; }
+.sr-left { width: 600px; flex: none; margin-right: 50px; }
+.sr-right { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sr-input { display: block; width: 100%; font-size: 40px; padding: 18px 26px; border-radius: 14px; border: 3px solid #3a4a5c; background: #1d232b; color: #fff; outline: none; }
+.sr-input:focus { border-color: #6fb3ff; }
+.kbmode .sr-input { display: none; }
+.sr-box { display: none; height: 84px; line-height: 78px; font-size: 38px; padding: 0 26px; border-radius: 14px; background: #1d232b; border: 3px solid #3a4a5c; color: #fff; white-space: nowrap; overflow: hidden; margin-bottom: 22px; }
+.kbmode .sr-box { display: block; }
+.sr-box .ph { color: #6b7684; }
+.sr-box .caret { display: inline-block; width: 3px; height: 40px; background: #6fb3ff; vertical-align: middle; margin-left: 4px; }
+.sr-kb { display: none; }
+.kbmode .sr-kb { display: block; font-size: 0; }
+.kb-key { display: inline-block; width: 90px; height: 76px; line-height: 70px; margin: 0 8px 8px 0; text-align: center; font-size: 32px; border-radius: 12px; background: #1d232b; border: 3px solid transparent; color: #e6ebf0; vertical-align: top; }
+.kb-key.wide { width: 188px; font-size: 28px; }
+.kb-key.focused { border-color: #6fb3ff; background: #27313d; color: #fff; }
+.sr-info { color: #9aa4b1; font-size: 26px; height: 40px; margin-bottom: 8px; }
+.sr-body { flex: 1; min-height: 0; overflow: hidden; }
+.sr-body .hdr { color: #6fb3ff; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; height: 52px; line-height: 64px; padding-left: 22px; }
+.sr-body .srrow { height: 62px; line-height: 62px; }
+.srk { flex: none; width: 112px; font-size: 20px; color: #9aa4b1; text-transform: uppercase; letter-spacing: 1px; }
+.srrow .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 28px; }
+.srl { flex: none; margin-left: 16px; font-size: 20px; padding: 0 10px; line-height: 32px; border-radius: 8px; background: #27313d; color: #c7cfd8; }
+.touchmode .sr-wrap { flex-direction: column; height: auto; }
+.touchmode .sr-left { width: auto; margin: 0 0 16px; }
+.touchmode .sr-body { overflow-y: auto; touch-action: pan-y; max-height: 760px; }
+.phone .sr-input { font-size: 46px; }
+.phone .sr-body .srrow { height: 120px; line-height: 120px; }
+.phone .srrow .label { font-size: 40px; } .phone .srk { width: 150px; font-size: 26px; } .phone .srl { font-size: 26px; line-height: 44px; }
+.phone .sr-body .hdr { font-size: 30px; height: 70px; line-height: 90px; }
+.portrait #screen-search { display: flex; flex-direction: column; }
+.portrait .sr-wrap { flex: 1; min-height: 0; }
+.portrait .sr-right { flex: 1; min-height: 0; }
+.portrait .sr-body { max-height: none; }
+
+/* series: season tabs, a tall episode list and the focused episode's picture + story on the right */
+.series-mode .detail-wrap { height: 100%; }
+.series-mode .detail-cover { width: 300px; height: 450px; margin-right: 40px; }
+.series-mode .detail-text { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 960px; }
+.series-mode .detail-plot { max-height: 108px; margin-bottom: 18px; }
+.series-mode .detail-actions { margin-bottom: 14px; }
+.seasons { white-space: nowrap; overflow: hidden; margin-bottom: 14px; flex: none; }
+.season { display: inline-block; font-size: 28px; padding: 10px 26px; margin-right: 12px; border-radius: 30px; background: #1d232b; color: #9aa4b1; border: 3px solid transparent; }
+.season.on { background: #27313d; color: #fff; }
+.season.focused { border-color: #6fb3ff; }
+.ep-area { display: flex; flex: 1; min-height: 0; }
+.series-mode .episodes { flex: 1; height: auto; min-height: 0; min-width: 0; }
+.ep-preview { width: 520px; flex: none; margin-left: 30px; }
+.ep-preview img { width: 520px; height: 292px; object-fit: cover; border-radius: 14px; background: #1d232b; display: block; }
+.ep-title { font-size: 30px; margin: 14px 0 6px; color: #fff; }
+.ep-meta { font-size: 24px; color: #9aa4b1; margin-bottom: 8px; }
+.ep-plot { font-size: 24px; line-height: 33px; color: #cfd6df; max-height: 264px; overflow: hidden; }
+.touchmode .seasons { overflow-x: auto; touch-action: pan-x; }
+.phone .season { font-size: 36px; padding: 16px 32px; }
+.phone .ep-preview { width: 420px; } .phone .ep-preview img { width: 420px; height: 236px; }
+.phone .ep-title { font-size: 34px; } .phone .ep-plot { font-size: 28px; line-height: 38px; }
+.portrait .series-mode .detail-text { height: auto; }
+.portrait .series-mode .detail-cover { width: 300px; height: 450px; }
+.portrait .ep-area { flex-direction: column-reverse; }
+.portrait .ep-preview { width: auto; margin: 0 0 16px; display: flex; flex-wrap: wrap; }
+.portrait .ep-preview img { width: 400px; height: 225px; margin-right: 20px; }
+.portrait .ep-preview .ep-title { flex: 1; min-width: 300px; }
+.portrait .ep-plot { width: 100%; max-height: 160px; }
+
+/* home (TV): six tiles that fit with air above the status line, readable clock */
+body:not(.touchmode):not(.portrait) .menu .tile { height: 96px; margin-bottom: 16px; width: 500px; }
+body:not(.touchmode):not(.portrait) .menu .tile-icon { font-size: 44px; width: 74px; }
+body:not(.touchmode):not(.portrait) .menu .tile-title { font-size: 34px; }
+body:not(.touchmode):not(.portrait) #home-tiles { margin-top: 10px; }
+.clock { color: #fff; text-shadow: 0 2px 10px #000, 0 0 4px #000; }
+.home-status { bottom: 34px; }
+
+/* player buttons always fit on one line (TV) */
+body:not(.touchmode):not(.portrait) .ctl-row { display: flex; flex-wrap: nowrap; overflow: hidden; }
+body:not(.touchmode):not(.portrait) .ctl-row .cbtn { padding: 10px 18px; margin-right: 10px; font-size: 24px; flex: none; }
+
+/* subtitles: soft dark box behind the text + outline, readable on any picture and in widescreen */
+.subtitles span { display: inline; background: rgba(0,0,0,.55); padding: 4px 16px; border-radius: 8px; -webkit-box-decoration-break: clone; box-decoration-break: clone; line-height: 1.45; font-weight: 600;
+  text-shadow: 2px 2px 3px #000, -2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000, 0 0 6px #000; }
+
+/* "Playing on the TV" remote */
+#screen-cast h1 { margin-bottom: 30px; }
+.cast-title { font-size: 44px; color: #fff; margin-bottom: 14px; }
+.cast-status { font-size: 30px; color: #9aa4b1; margin-bottom: 24px; min-height: 40px; }
+.cast-bar { height: 10px; border-radius: 5px; background: #27313d; margin-bottom: 40px; overflow: hidden; max-width: 1200px; }
+.cast-bar i { display: block; height: 100%; width: 0; background: #6fb3ff; }
+.cast-btns { display: flex; flex-wrap: wrap; }
+.cast-btns .btn { margin: 0 20px 20px 0; }
+.phone .cast-title { font-size: 54px; } .phone .cast-status { font-size: 38px; }
+.phone .cast-btns .btn { font-size: 40px; padding: 30px 40px; }
+
+/* delicate scroll bars: TV (drawn by the app for its windowed lists) and phone / web (native, slimmed) */
+#country-list, #cat-list, #item-list, #detail-episodes, #sr-body, #dl-body, #settings-body { position: relative; }
+.sbar { position: absolute; right: 0; top: 6px; bottom: 6px; width: 5px; border-radius: 3px; background: rgba(255,255,255,.07); pointer-events: none; }
+.sbar i { position: absolute; left: 0; right: 0; border-radius: 3px; background: rgba(111,179,255,.55); }
+.touchmode ::-webkit-scrollbar { width: 6px; height: 6px; }
+.touchmode ::-webkit-scrollbar-track { background: transparent; }
+.touchmode ::-webkit-scrollbar-thumb { background: rgba(111,179,255,.45); border-radius: 3px; }
+
+/* wide screens (phone sideways, wide browser windows): the canvas is as wide as the screen, full-size layers follow it */
+body.wide .screen, body.wide #player-ui, body.wide .center-ctl, body.wide #screen-home::after { width: 100%; }
+/* the phone has no round back button any more: the player bar runs to the edge */
+body.phone .player-bottom { padding-right: 60px; }
+body.phone.portrait .player-bottom { padding-right: 50px; }
+
+/* ===== wide canvas: everything stretches to the real width ===== */
+body.wide .home-bg { left: 300px; }
+body.wide .settings { width: auto; }
+/* channel preview: the video as big as the height allows, the channel list takes the rest of the width */
+body.wide #screen-browse.previewing .items { flex: 1; width: auto; min-width: 600px; }
+body.wide .preview { width: 1244px; flex: none; }
+body.wide .preview-video { width: 1244px; height: 700px; }
+/* poster grids: as many columns as fit, stretched to the full width */
+body.wide .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(208px, 1fr)); column-gap: 26px; padding-right: 10px; }
+body.wide .grid .card { width: auto; margin: 0 0 26px 0; }
+body.phone.wide .grid { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+/* phone: larger text under the preview, so the video is a little smaller to keep title + buttons on screen */
+body.phone.wide .preview { width: 1060px; }
+body.phone.wide .preview-video { width: 1060px; height: 596px; }
+
+/* "On the TV now - Watch along" card (phone / web, only while the TV plays): right side, apart from the menu */
+.tv-line { position: absolute; left: 80px; right: 80px; bottom: 56px; padding: 14px 22px; border-radius: 14px; background: rgba(12,15,19,.86); border: 3px solid rgba(111,179,255,.35); font-size: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 2; }
+.tv-line.ready { border-color: #7bd88f; color: #d8ffe0; }
+.portrait .tv-line { left: 24px; right: 24px; bottom: 120px; font-size: 22px; padding: 12px 18px; }
+.along-card { position: absolute; right: 80px; bottom: 110px; width: 640px; padding: 30px 36px 28px; border-radius: 22px; background: rgba(12,15,19,.86); border: 3px solid rgba(111,179,255,.45); box-shadow: 0 10px 40px rgba(0,0,0,.5); z-index: 2; cursor: pointer; }
+.along-card.focused { border-color: #6fb3ff; }
+.ac-label { color: #6fb3ff; font-size: 24px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+.ac-title { font-size: 42px; font-weight: 600; line-height: 1.15; color: #fff; }
+.ac-sub { font-size: 28px; color: #cfd6df; margin-top: 8px; min-height: 34px; }
+.ac-btn { display: inline-block; margin-top: 22px; font-size: 32px; padding: 16px 34px; }
+.ac-hint { font-size: 20px; color: #8d99a7; margin-top: 16px; line-height: 1.35; }
+.phone .along-card { width: 760px; } .phone .ac-title { font-size: 50px; } .phone .ac-sub { font-size: 34px; } .phone .ac-btn { font-size: 40px; padding: 22px 40px; } .phone .ac-hint { font-size: 26px; }
+.portrait .along-card { left: 70px; right: 70px; width: auto; bottom: 60px; }
+
+/* no stacked text: remote hints only on the TV, the home status line hides while a video plays */
+.touchmode .player-hint { display: none; }
+body.playing .home-status { display: none; }
+#screen-home > .along-card { position: absolute; }   /* the home screen's children are positioned relative by default */
+.ac-title { overflow: visible; }
+.ac-title { line-height: 1.3; }
+.portrait .along-card { bottom: 130px; }
+
+/* phone upright: the photo stays uncovered - route switch and clock move below the menu; the 'watch along' card is one compact row above them */
+.portrait #screen-home > .home-header { position: static; }
+.portrait .home-right { position: absolute; left: 70px; right: 70px; bottom: 150px; z-index: 1; flex-direction: row; align-items: center; justify-content: space-between; }
+.portrait .route-chip { margin-bottom: 0; }
+.portrait .clock { text-shadow: none; color: #9aa4b1; font-size: 30px; }
+.portrait .along-card { bottom: 270px; padding: 22px 30px; display: flex; flex-wrap: wrap; align-items: center; }
+.portrait .ac-label { width: 100%; margin-bottom: 6px; font-size: 22px; }
+.portrait .ac-title { font-size: 36px; width: 100%; }
+.portrait .ac-sub { width: 100%; font-size: 26px; min-height: 0; margin-top: 2px; }
+.portrait .ac-btn { margin: 10px 0 0; font-size: 32px; padding: 14px 28px; }
+.portrait .ac-hint { display: none; }
+.portrait .brand { position: relative; z-index: 1; }
+.portrait .clock { white-space: nowrap; font-size: 26px; }
+.portrait .route-chip { font-size: 30px; padding: 8px 12px 8px 22px; }

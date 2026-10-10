@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Los Bebos TV</title>
+<link rel="icon" type="image/png" sizes="192x192" href="favicon.png">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#101317">
+<link rel="stylesheet" href="css/style.css?v=1791649407">
+</head>
+<body>
+<object id="av-player" type="application/avplayer"></object>
+<div id="app">
+  <div id="screen-home" class="screen">
+    <div id="home-bg" class="home-bg"></div>
+    <div class="home-header"><div class="brand">Los Bebos TV</div><div class="home-right"><div id="route-chip" class="route-chip"><span id="route-label"></span><span class="rt-switch hidden"><span class="rt-knob"></span></span></div><div id="clock" class="clock"></div></div></div>
+    <div id="home-tiles" class="menu">
+      <div class="tile focusable" data-action="favs"><span class="tile-icon">&#9733;</span><span class="tile-title">My channels</span></div>
+      <div class="tile focusable" data-action="series"><span class="tile-icon">&#128250;</span><span class="tile-title">Series</span></div>
+      <div class="tile focusable" data-action="vod"><span class="tile-icon">&#127916;</span><span class="tile-title">Movies</span></div>
+      <div class="tile focusable" data-action="live"><span class="tile-icon">&#9655;</span><span class="tile-title">Live TV</span></div>
+      <div class="tile focusable" data-action="downloads"><span class="tile-icon">&#11015;</span><span class="tile-title">Downloads<small id="dl-sum"></small></span></div>
+      <div class="tile focusable" data-action="settings"><span class="tile-icon">&#9881;</span><span class="tile-title">Settings</span></div>
+    </div>
+    <div id="along-card" class="along-card hidden"><div class="ac-label">&#128250; On the TV now</div><div id="ac-title" class="ac-title"></div><div id="ac-sub" class="ac-sub"></div><div id="ac-btn" class="btn ac-btn">&#9654; Watch along</div><div class="ac-hint">You see what the TV shows; pausing or skipping here does it on the TV too.</div></div>
+    <div id="home-status" class="home-status"></div>
+  </div>
+
+  <div id="screen-browse" class="screen hidden">
+    <div class="browse-header"><span id="browse-title"></span><span id="browse-tabs" class="tabs hidden"></span><span id="browse-count" class="count"></span><span id="browse-hint" class="hint">Yellow: favourite &nbsp; Back: up</span></div>
+    <div class="browse-body">
+      <div id="col-countries" class="col countries hidden"><div class="col-title">Country</div><div id="country-list" class="list"></div></div>
+      <div id="col-cats" class="col cats"><div id="cat-title" class="col-title">Category</div><div id="cat-list" class="list"></div></div>
+      <div id="col-items" class="col items"><div id="item-title" class="col-title">Channels</div><div id="item-list" class="list"></div></div>
+      <div id="preview-panel" class="preview hidden"><div class="preview-video"></div><div class="preview-text"><div id="preview-title" class="preview-title"></div><div id="preview-epg" class="preview-epg"></div><div id="preview-status" class="preview-status"></div><div id="preview-btns" class="preview-btns"></div><div class="preview-hint">Right: buttons &nbsp; Up/Down: choose channel &nbsp; OK: full screen &nbsp; Back: close preview</div></div></div>
+    </div>
+  </div>
+
+  <div id="screen-detail" class="screen hidden">
+    <div class="detail-wrap">
+      <img id="detail-cover" class="detail-cover" alt="" referrerpolicy="no-referrer">
+      <div class="detail-text">
+        <h1 id="detail-title"></h1>
+        <div id="detail-meta" class="detail-meta"></div>
+        <p id="detail-plot" class="detail-plot"></p>
+        <div id="detail-actions" class="detail-actions"></div>
+        <div id="detail-seasons" class="seasons hidden"></div>
+        <div class="ep-area">
+          <div id="detail-episodes" class="list episodes"></div>
+          <div id="ep-preview" class="ep-preview hidden"><img id="ep-img" alt="" referrerpolicy="no-referrer"><div id="ep-title" class="ep-title"></div><div id="ep-meta" class="ep-meta"></div><div id="ep-plot" class="ep-plot"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-settings" class="screen hidden">
+    <h1>Settings</h1>
+    <div id="settings-body" class="settings"></div>
+  </div>
+
+  <div id="screen-search" class="screen hidden">
+    <h1 id="sr-title">Search</h1>
+    <div class="sr-wrap">
+      <div class="sr-left">
+        <input id="sr-input" class="sr-input" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Channel, movie or series">
+        <div id="sr-box" class="sr-box"></div>
+        <div id="sr-kb" class="sr-kb"></div>
+      </div>
+      <div class="sr-right">
+        <div id="sr-info" class="sr-info"></div>
+        <div id="sr-body" class="sr-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-cast" class="screen hidden">
+    <h1>Playing on the TV</h1>
+    <div id="cast-title" class="cast-title"></div>
+    <div id="cast-status" class="cast-status"></div>
+    <div class="cast-bar"><i id="cast-fill"></i></div>
+    <div id="cast-btns" class="cast-btns"></div>
+  </div>
+
+  <div id="screen-downloads" class="screen hidden">
+    <h1>Downloads</h1>
+    <div id="dl-info" class="dl-info"></div>
+    <div id="dl-body" class="settings dl-list"></div>
+  </div>
+
+  <div id="player-ui" class="hidden">
+    <div id="player-top" class="player-top">
+      <div id="player-title"></div>
+      <div id="player-aspect" class="aspect-badge"></div>
+    </div>
+    <div id="player-bottom" class="player-bottom">
+      <div id="player-epg"></div>
+      <div class="progress"><div id="progress-fill" class="progress-fill"></div><div id="seek-marker" class="seek-marker hidden"><img id="seek-thumb" class="seek-thumb hidden" alt="" onerror="this.classList.add('hidden')"><div class="seek-time" id="seek-time"></div></div></div>
+      <div class="times"><span id="time-cur">0:00</span><span id="time-dur"></span></div>
+      <div id="ctl-row" class="ctl-row"></div>
+      <div class="player-hint">Up/Down: seek bar or buttons &nbsp; Left/Right: 15 s or move &nbsp; OK: select &nbsp; Back: hide, then stop</div>
+    </div>
+    <div id="player-msg" class="player-msg hidden"></div>
+    <div id="track-menu" class="track-menu hidden"></div>
+    <div id="center-ctl" class="center-ctl hidden"><div class="cc-btn cc-back" data-cc="back"><svg viewBox="0 0 48 48"><path d="M24 10a14 14 0 1 1-12.6 7.9" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><path d="M8 9v10h10" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="29.5" text-anchor="middle" font-size="11" font-weight="700" fill="#fff" font-family="sans-serif">10</text></svg></div><div class="cc-btn cc-play" data-cc="play"><svg class="ic-pause" viewBox="0 0 48 48"><rect x="14" y="11" width="7" height="26" rx="2" fill="#fff"/><rect x="27" y="11" width="7" height="26" rx="2" fill="#fff"/></svg><svg class="ic-play" viewBox="0 0 48 48"><path d="M17 11v26l21-13z" fill="#fff"/></svg></div><div class="cc-btn cc-fwd" data-cc="fwd"><svg viewBox="0 0 48 48"><path d="M24 10a14 14 0 1 0 12.6 7.9" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><path d="M40 9v10H30" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="29.5" text-anchor="middle" font-size="11" font-weight="700" fill="#fff" font-family="sans-serif">10</text></svg></div></div>
+  </div>
+  <div id="next-up" class="next-up hidden"></div>
+  <div id="subtitles" class="subtitles"></div>
+  <div id="toast" class="toast hidden"></div>
+  <div id="loader" class="loader hidden">Loading...</div>
+</div>
+<script src="js/config.local.js?v=1791649407"></script>
+<script src="__preview/hls.min.js?v=1791649407"></script>
+<script src="__preview/stub.js?v=1791649407"></script>
+<script src="js/platform.js?v=1791649407"></script>
+<script src="js/config.js?v=1791649407"></script>
+<script src="js/api.js?v=1791649407"></script>
+<script src="js/mkv.js?v=1791649407"></script>
+<script src="js/dl.js?v=1791649407"></script>
+<script src="js/search.js?v=1791649407"></script>
+<script src="js/player.js?v=1791649407"></script>
+<script src="js/ui.js?v=1791649407"></script>
+<script src="js/bg.js?v=1791649407"></script>
+<script src="js/app.js?v=1791649407"></script>
+<script src="js/touch.js?v=1791649407"></script>
+<script src="js/cast.js?v=1791649407"></script>
+</body>
+</html>
