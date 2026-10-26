@@ -493,7 +493,7 @@ var UI = (function () {
       .catch(function () { tvSending = false; });
   }
   // phone / web home screen: what the TV is fetching onto its stick, and what just finished ('Ready on the TV'), one small request every 20 s
-  var tvInfo = { list: [], events: [], at: 0 }, tvPollT = 0, tvArmedAt = 0, tvToastedAt = 0;
+  var tvInfo = { list: [], events: [], at: 0 }, tvPollT = 0, tvArmedAt = 0, tvToastedAt = 0, tvSeenAt = 0;
   function tvWatchArm() { if (!window.IS_ANDROID || Date.now() - tvArmedAt < 600000) return; tvArmedAt = Date.now(); try { if (AndroidBridge.tvWatch) AndroidBridge.tvWatch(API.homeApi('tvdl')); } catch (e) {} }   // Android: a look at the TV every ~15 min, notification when something is ready
   function tvPoll(now) {
     if (!(window.IS_ANDROID || window.PREVIEW) || !API.homeApi) return; var u = API.homeApi('tvdl'); if (!u) return;
@@ -503,9 +503,12 @@ var UI = (function () {
       var pend = (j && j.pending ? j.pending : []).map(function (x) { return { key: x.kind + ':' + x.id, title: (x.seriesName ? x.seriesName + '  ' : '') + (x.name || ''), state: 'pending', got: 0, total: 0 }; });   // asked, the TV has not taken it yet (switching on)
       tvInfo = { list: pend.concat(j && j.list ? j.list : []), events: j && j.events ? j.events : [], at: Date.now(), shown: tvInfo.shown || 0 };
       if (tvInfo.list.some(function (e) { return e.state !== 'done' && e.state !== 'failed'; })) tvWatchArm();   // something is downloading on the TV (asked from anywhere): tell me when it is ready
-      var seen = Number(localStorage.getItem('doortv.tvseen') || 0), fresh = tvInfo.events.filter(function (e) { return e.at > seen; });
+      var seen = tvSeenAt; try { seen = Math.max(seen, Number(localStorage.getItem('doortv.tvseen') || 0)); } catch (x) {}
+      if (!seen) { seen = j.now || Date.now(); try { localStorage.setItem('doortv.tvseen', String(seen)); } catch (x) {} }
+      tvSeenAt = seen;
+      var fresh = tvInfo.events.filter(function (e) { return e.at > seen && (j.now || Date.now()) - e.at <= 86400000; });
       var newest = fresh.length ? fresh[fresh.length - 1].at : 0;
-      if (newest && newest !== tvToastedAt) { tvToastedAt = newest; var e = fresh[fresh.length - 1]; toast((e.failed ? 'The TV could not download ' : 'Ready on the TV: ') + niceName(e.title), 6000); try { localStorage.setItem('doortv.tvseen', String(newest)); } catch (x) {} tvInfo.shown = newest; }   // said once; afterwards it is simply in Downloads > On the TV
+      if (newest && newest !== tvToastedAt) { tvToastedAt = newest; tvSeenAt = newest; var e = fresh[fresh.length - 1]; toast((e.failed ? 'The TV could not download ' : 'Ready on the TV: ') + niceName(e.title), 6000); try { localStorage.setItem('doortv.tvseen', String(newest)); } catch (x) {} tvInfo.shown = newest; }   // said once; afterwards it is simply in Downloads > On the TV
       var c = current(); if (c && c.dom === 'screen-home' && c.render) c.render();
     }).catch(function () {});
   }
