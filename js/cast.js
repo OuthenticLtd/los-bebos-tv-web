@@ -8,7 +8,7 @@
   window.TV_STATE_CHANGED = function () { if (along) { lastReport = Date.now(); report(last); } };   // pause / seek: tell the followers at once
   function report(seq) {
     try { var s = PLAYER.status(), x = new XMLHttpRequest(); x.open('POST', R() + '/relay/cast', true);
-      x.send(JSON.stringify({ seq: seq, state: s.active ? (s.paused ? 'paused' : s.buffering ? 'buffering' : 'playing') : 'idle', title: s.title, key: PLAYER.currentKey ? PLAYER.currentKey() : null, pos: s.time, dur: s.duration, shared: !!s.shared, live: s.live || null, note: PLAYER.note ? PLAYER.note() : '', at: Date.now() })); } catch (e) {}
+      x.send(JSON.stringify({ seq: seq, state: s.active ? (s.paused ? 'paused' : s.buffering ? 'buffering' : 'playing') : 'idle', title: s.title, key: PLAYER.currentKey ? PLAYER.currentKey() : null, pos: s.time, dur: s.duration, shared: !!s.shared, failure: s.failure || null, live: s.live || null, note: PLAYER.note ? PLAYER.note() : '', at: Date.now() })); } catch (e) {}
   }
   function reportFs(root) {   // send the laptop the stick's file tree (so it can manage/delete/move), + free space
     if (!window.DL || !DL.fs || !DL.fs.rawList) return;

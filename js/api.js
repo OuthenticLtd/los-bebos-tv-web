@@ -12,6 +12,18 @@ var API = (function () {
     for (var k in params) u += '&' + k + '=' + encodeURIComponent(params[k]);
     return u;
   }
+  function fetchAccountJSON(target) {
+    return new Promise(function (resolve, reject) {
+      var done = false, controller = window.AbortController ? new AbortController() : null;
+      var timer = setTimeout(function () { if (done) return; done = true; if (controller) controller.abort(); reject(new Error('Provider API timeout')); }, 20000);
+      function finish(error, value) { if (done) return; done = true; clearTimeout(timer); if (error) reject(error); else resolve(value); }
+      fetch(target, { cache: 'no-store', signal: controller ? controller.signal : undefined }).then(function (r) {
+        // Keep the deadline active while the body is arriving, including non-JSON errors.
+        return r.text().then(function (text) { var value; try { value = JSON.parse(text); } catch (e) { if (r.ok) throw new Error('Invalid provider response'); value = null; }
+          finish(null, { status: r.status, ok: r.ok, json: function () { return Promise.resolve(value); } }); });
+      }).catch(function (e) { finish(e); });
+    });
+  }
   function getJSON(params, ttlMs) {
     var key = JSON.stringify(params);
     var now = Date.now();
@@ -22,7 +34,7 @@ var API = (function () {
       return Promise.resolve(false);
     }
     API_REFRESH = refreshHome;
-    var attempt = function () { return fetch(url(params), { cache: 'no-store' }); };
+    var attempt = function () { return fetchAccountJSON(url(params)); };
     return attempt().then(function (r) { if (r.status === 530 || r.status === 502 || r.status === 1033) return refreshHome().then(function (ch) { return ch ? attempt() : r; }); return r; }, function (e) { return refreshHome().then(function (ch) { if (ch) return attempt(); throw e; }); }).then(function (r) {
       if (r.status === 403 && window.PREVIEW && window.LOSBEBOS_LOGIN) { window.LOSBEBOS_LOGIN('Please sign in again'); throw new Error('sign-in needed'); }
       if (!r.ok) throw new Error('HTTP ' + r.status);

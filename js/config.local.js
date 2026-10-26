@@ -1,6 +1,6 @@
 // Web copy: no provider login here. First visit asks for a user name + password once; the browser then keeps an access token.
 (function () {
-  var API_BASE = 'https://commitments-causes-background-blades.trycloudflare.com';
+  var API_BASE = 'https://anitka-macbook.tailc505f3.ts.net';
   // the home address can change (laptop restart / network drop): read the current one, it is republished within ~30 s
   try { var x = new XMLHttpRequest(); x.open('GET', 'api-base.txt?t=' + Date.now(), false); x.send(); if (x.status === 200 && /^https:\/\//.test(x.responseText.trim())) API_BASE = x.responseText.trim(); } catch (e) {}
   window.REFRESH_HOME = function () { try { var y = new XMLHttpRequest(); y.open('GET', 'api-base.txt?t=' + Date.now(), false); y.send(); var b = y.responseText.trim(); if (y.status === 200 && /^https:\/\//.test(b) && b !== API_BASE) { API_BASE = b; window.LOCAL_CONFIG.server = b + '/api'; if (window.CONFIG) CONFIG.server = b + '/api'; return true; } } catch (e) {} return false; };

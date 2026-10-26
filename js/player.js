@@ -11,6 +11,7 @@ var PLAYER = (function () {
   function retryPlayback(item, playlist, index, opts, delay) {
     if (!st.active || st.item !== item || recoveryTimer) return false;
     var generation = recoveryGeneration;
+    recordFailure('recovery', 'CONNECTION');
     recoveryTimer = -1; // Block synchronous error callbacks emitted by stop/close.
     clearInterval(stallT);
     try { av().stop(); } catch (e) {}
@@ -20,6 +21,10 @@ var PLAYER = (function () {
       if (generation === recoveryGeneration && st.active && st.item === item && !document.hidden) play(item, playlist, index, opts);
     }, delay);
     return true;
+  }
+  function recordFailure(stage, error) {
+    var text = String(error || ''), reason = /codec|not.support|format/i.test(text) ? 'decoder' : /460|429|busy/i.test(text) ? 'provider_busy' : /network|connection|timeout|IO_|BAD_HTTP|Source error/i.test(text) ? 'network_or_upstream' : 'unknown';
+    st.lastFailure = { at: Date.now(), stage: stage, reason: reason, route: st.item && st.item.shareUrl ? 'shared' : st.local ? 'local' : 'direct', retry: st.item ? st.item.netRetries || 0 : 0 };
   }
   function canRetry(item) { return item && (item.kind === 'live' || (item.netRetries || 0) < NET_TRIES); }
 
@@ -308,12 +313,13 @@ var PLAYER = (function () {
         }
         stop(); UI.toast('Playback finished'); },
       onerror: function (e) {
+        recordFailure('playback', e);
         // TV + phone: a dropped/refused connection at the provider's video server is retried (resuming at the same spot) before giving up
         if (!st.local && window.DL && st.item && st.item.kind !== 'live' && DL.local(st.item) && /IO_|NETWORK|TIMEOUT|BAD_HTTP|Source error|CONNECTION/i.test(String(e))) { var itL = st.item, plL = st.playlist, ixL = st.index; if (st.time > 0) STORE.setPosition(itL.kind + ':' + itL.id, st.time); msg('Internet dropped, continuing from the downloaded copy...'); setTimeout(function () { if (st.item === itL) play(itL, plL, ixL); }, 400); return; }
         if (st.item && st.item.shareUrl && !window.IS_ANDROID && !window.PREVIEW && !/IO_|NETWORK|TIMEOUT|BAD_HTTP|Source error|CONNECTION/i.test(String(e))) { var itS = Object.assign({}, st.item), plS = st.playlist, ixS = st.index; if (st.time > 0 && itS.kind !== 'live') STORE.setPosition(itS.kind + ':' + itS.id, st.time); delete itS.shareUrl; msg('The home laptop stopped sharing, playing directly...'); setTimeout(function () { play(itS, plS, ixS, { dlOk: true }); }, 500); return; }
         if (st.item && /\b460\b/.test(String(e)) && (st.item.kind === 'live' || (st.item.busyTries || 0) < 30)) { var itB = st.item, plB = st.playlist, ixB = st.index, atB = st.time; itB.busyTries = (itB.busyTries || 0) + 1; if (atB > 0 && itB.kind !== 'live') STORE.setPosition(itB.kind + ':' + itB.id, atB);
           msg('Another device is using the stream (the account allows one). Trying again in 60 s... (' + itB.busyTries + ')'); retryPlayback(itB, plB, ixB, { dlOk: true }, 60000); return; }
-        if (!window.PREVIEW && canRetry(st.item) && /IO_|NETWORK|TIMEOUT|BAD_HTTP|Source error|CONNECTION/i.test(String(e))) { var itR = st.item, plR = st.playlist, ixR = st.index, atR = st.time; itR.netRetries = (itR.netRetries || 0) + 1; msg(netMsg(itR.netRetries)); if (atR > 0 && itR.kind !== 'live') STORE.setPosition(itR.kind + ':' + itR.id, atR); retryPlayback(itR, plR, ixR, { dlOk: true, keepMsg: true }, netDelay(itR.netRetries)); return; }
+        if ((!window.PREVIEW || (st.item && st.item.kind === 'live')) && canRetry(st.item) && /IO_|NETWORK|TIMEOUT|BAD_HTTP|Source error|CONNECTION/i.test(String(e))) { var itR = st.item, plR = st.playlist, ixR = st.index, atR = st.time; itR.netRetries = (itR.netRetries || 0) + 1; msg(netMsg(itR.netRetries)); if (atR > 0 && itR.kind !== 'live') STORE.setPosition(itR.kind + ':' + itR.id, atR); retryPlayback(itR, plR, ixR, { dlOk: true, keepMsg: true }, netDelay(itR.netRetries)); return; }
         if ((window.PREVIEW || (window.IS_ANDROID && API.viaHome())) && st.item && !st.item.homeRetried && API.refreshHome) { var it0 = st.item, pl1 = st.playlist, ix1 = st.index; it0.homeRetried = true; API.refreshHome().then(function (ch) { if (ch) { UI.toast('Home address changed, reconnecting...', 2500); play(it0, pl1, ix1); } else msg('Playback error: ' + e); }); return; }
         // browser cannot decode this live channel (4K HEVC): switch to the HD version of the same channel
         if ((window.PREVIEW || window.IS_ANDROID) && st.item && st.item.kind === 'live' && !st.item.along && /codec/i.test(String(e)) && !st.item.altTried && API.alt) {
@@ -486,7 +492,7 @@ var PLAYER = (function () {
         if (window.DL) DL.playing(item);
         alongFollow(item);
         watchTv();
-      }, function (e) { if (!window.PREVIEW && st.item === item && canRetry(item) && /CONNECTION|NETWORK|TIMEOUT|IO_|BAD_HTTP|Source error/i.test(String(e))) { item.netRetries = (item.netRetries || 0) + 1; msg(netMsg(item.netRetries)); retryPlayback(item, playlist, index, opts, netDelay(item.netRetries)); return; } if (st.relayUrl && !st.retriedDirect) { window.RELAY_OK = false; UI.toast('Laptop relay not answering, playing directly', 2500); return play(item, playlist, index, Object.assign({}, opts, { retriedDirect: true })); } msg('Cannot open stream: ' + e); setPreviewText(null, 'Cannot open stream: ' + e); if (window.DIAG) window.DIAG('prepareError', String(e)); });
+      }, function (e) { if (!st.active || st.item !== item) return; recordFailure('prepare', e); if ((!window.PREVIEW || item.kind === 'live') && st.item === item && canRetry(item) && /CONNECTION|NETWORK|TIMEOUT|IO_|BAD_HTTP|Source error/i.test(String(e))) { item.netRetries = (item.netRetries || 0) + 1; msg(netMsg(item.netRetries)); retryPlayback(item, playlist, index, opts, netDelay(item.netRetries)); return; } if (st.relayUrl && !st.retriedDirect) { window.RELAY_OK = false; UI.toast('Laptop relay not answering, playing directly', 2500); return play(item, playlist, index, Object.assign({}, opts, { retriedDirect: true })); } msg('Cannot open stream: ' + e); setPreviewText(null, 'Cannot open stream: ' + e); if (window.DIAG) window.DIAG('prepareError', String(e)); });
     } catch (e) { msg('Cannot open stream: ' + (e && e.message ? e.message : e)); }
     }
   }
@@ -572,15 +578,15 @@ var PLAYER = (function () {
     clearInterval(stallT); if (!(window.IS_ANDROID || window.PREVIEW) || st.local) return;
     var lastT = -1, since = Date.now();
     stallT = setInterval(function () {
-      if (!st.active || st.item !== item || st.casting) { clearInterval(stallT); return; }
+      if (!st.active || st.item !== item || st.casting || recoveryTimer) { clearInterval(stallT); return; }
       var paused = false; try { paused = av().getState() === 'PAUSED'; } catch (e) {}
       if (paused || st.time !== lastT) { lastT = st.time; since = Date.now(); return; }
       if (Date.now() - since < 15000) return;
       clearInterval(stallT); item.stalls = (item.stalls || 0) + 1; if (item.kind !== 'live' && item.stalls > 20) { msg('The provider sends no video right now. Try again later.'); return; }
       var pl = st.playlist, ix = st.index, at = st.time; if (at > 0 && item.kind !== 'live') STORE.setPosition(item.kind + ':' + item.id, at);
-      try { av().stop(); } catch (e) {}   // close the connection: a stalled stream would still count as the account's one stream
-      msg('No video coming from the provider. Freed the connection, trying again in 20 s... (' + item.stalls + ')');
-      setTimeout(function () { if (st.item === item && st.active) play(item, pl, ix, { dlOk: true }); }, 20000);
+      item.netRetries = (item.netRetries || 0) + 1;
+      msg(netMsg(item.netRetries));
+      retryPlayback(item, pl, ix, { dlOk: true, keepMsg: true }, netDelay(item.netRetries));
     }, 3000);
   }
   // ---- watch along (phone / web): show what the TV shows, in step; pause / skip here does it on the TV ----
@@ -776,5 +782,5 @@ var PLAYER = (function () {
       if (cs.state === 'idle' && cs.idleReason === 1 && st.duration > 0 && st.time > st.duration - 15000 && st.playlist && st.index + 1 < st.playlist.length) { var nx = st.playlist[st.index + 1], dv = window.CAST.active; st.index++; st.item = nx; st.time = 0; window.CAST.play(dv.id, nx.localUrl || (window.DL && DL.local(nx) ? DL.local(nx).url : API.streamUrl(nx.kind, nx.id, nx.ext, nx.name)), (nx.seriesName ? nx.seriesName + ' - ' : '') + nx.name, 0); el.title.textContent = nx.name; }   // finished: next episode on the TV
       renderCtl(); },
     castEnded: function () { if (st.casting) { st.casting = false; msg('Casting ended'); renderCtl(); } },
-    watchAlong: function () { startAlong(); }, seekTo: function (ms) { if (st.active && st.duration > 0) { seekAcc.target = Math.max(0, Math.min(st.duration - 1000, ms)); seekAcc.last = 0; clearTimeout(seekAcc.timer); commitSeek(); } }, playlistNow: function () { return st.playlist; }, indexNow: function () { return st.index; }, item: function () { return st.item; }, status: function () { var p = false; try { p = av().getState() === 'PAUSED'; } catch (e) {} return { active: !!st.active, title: st.item ? (st.item.seriesName ? st.item.seriesName + '  ' : '') + st.item.name : '', time: st.time || 0, duration: st.duration || 0, paused: p, buffering: !!st.buffering, shared: !!(st.item && st.item.shareUrl), live: currentLiveInfo() }; }, togglePause: function () { if (st.active) togglePause(); }, castTo: function () { castMenu(); }, init: init, currentKey: function () { return st.active && st.item ? st.item.kind + ':' + st.item.id : null; }, relayout: relayout, play: play, stop: stop, onKey: onKey, isLocal: function () { return !!(st.active && st.local); }, isActive: function () { return st.active; }, isPreview: function () { return st.active && !!st.preview; }, previewOf: previewOf, tapButton: tapButton, tapMenu: tapMenu, tapMenuColumn: tapMenuColumn, dragSeek: dragSeek, endDragSeek: endDragSeek, nudge: nudge, centerAction: centerAction, tapSeek: tapSeek, tapScreen: tapScreen, fullscreen: fullscreen, toPreview: toPreview, setMode: setMode, MODES: MODES, MODE_LABEL: MODE_LABEL };
+    watchAlong: function () { startAlong(); }, seekTo: function (ms) { if (st.active && st.duration > 0) { seekAcc.target = Math.max(0, Math.min(st.duration - 1000, ms)); seekAcc.last = 0; clearTimeout(seekAcc.timer); commitSeek(); } }, playlistNow: function () { return st.playlist; }, indexNow: function () { return st.index; }, item: function () { return st.item; }, status: function () { var p = false; try { p = av().getState() === 'PAUSED'; } catch (e) {} return { active: !!st.active, title: st.item ? (st.item.seriesName ? st.item.seriesName + '  ' : '') + st.item.name : '', time: st.time || 0, duration: st.duration || 0, paused: p, buffering: !!st.buffering, failure: st.lastFailure || null, shared: !!(st.item && st.item.shareUrl), live: currentLiveInfo() }; }, togglePause: function () { if (st.active) togglePause(); }, castTo: function () { castMenu(); }, init: init, currentKey: function () { return st.active && st.item ? st.item.kind + ':' + st.item.id : null; }, relayout: relayout, play: play, stop: stop, onKey: onKey, isLocal: function () { return !!(st.active && st.local); }, isActive: function () { return st.active; }, isPreview: function () { return st.active && !!st.preview; }, previewOf: previewOf, tapButton: tapButton, tapMenu: tapMenu, tapMenuColumn: tapMenuColumn, dragSeek: dragSeek, endDragSeek: endDragSeek, nudge: nudge, centerAction: centerAction, tapSeek: tapSeek, tapScreen: tapScreen, fullscreen: fullscreen, toPreview: toPreview, setMode: setMode, MODES: MODES, MODE_LABEL: MODE_LABEL };
 })();
