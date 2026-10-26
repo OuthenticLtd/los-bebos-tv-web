@@ -13,6 +13,7 @@ var DL = (function () {
   var dir = null, dirObj = null, usbBase = null, freeBytes = -1, listeners = [], pollT = 0, autoT = 0, inited = false;
   function now() { return Date.now(); }
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
+  var presentOnStick = {};
   var db = load();   // per device, never synced (each device has its own files)
   function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
   var saveT = 0; function saveSoon() { if (!saveT) saveT = setTimeout(function () { saveT = 0; save(); }, 10000); }   // progress is written at most every 10 s
@@ -20,8 +21,15 @@ var DL = (function () {
   function reportTV() {   // TV: tell the laptop what is on the stick / downloading (light: at most every 20 s, LAN only)
     if (!TV || !CONFIG.relay || repT) return;
     repT = setTimeout(function () { repT = 0;
-      try { var x = new XMLHttpRequest(); x.open('POST', CONFIG.relay.replace(/\/+$/, '') + '/relay/dlstate', true);
-        x.send(JSON.stringify({ list: all().map(function (e) { return { key: e.key, title: e.title, state: e.state, got: e.got || 0, total: e.total || 0, paused: !!e.paused, tries: e.tries || 0, err: e.err || '', log: e.log || [], folder: e.folder || '' }; }) })); } catch (er) {}
+      var rows = all().map(function (e) { return { key: e.key, title: e.title, state: e.state, got: e.got || 0, total: e.total || 0, paused: !!e.paused, tries: e.tries || 0, err: e.err || '', log: e.log || [], folder: e.folder || '', file: e.file || '', rel: e.rel || '', completedAt: e.done || 0 }; });
+      TV_DOWNLOAD_PRESENCE.verify(rows, {
+        pathFor: function (e) { return !dir || !usbBase ? null : e.rel ? usbBase + '/' + cleanRel(e.rel) : dir + '/' + e.file; },
+        resolve: function (path, success, failure) { tizen.filesystem.resolve(path, success, failure, 'r'); }
+      }, function (verified) {
+        presentOnStick = {}; verified.forEach(function (row) { if (row.state === 'done' && row.present === true) presentOnStick[row.key] = true; });
+        listeners.forEach(function (f) { try { f(); } catch (e) {} });
+        try { var x = new XMLHttpRequest(); x.open('POST', CONFIG.relay.replace(/\/+$/, '') + '/relay/dlstate', true); x.send(JSON.stringify({ list: verified })); } catch (er) {}
+      });
     }, 20000);
   }
   var emitT = 0, lastEmit = 0;
@@ -35,7 +43,7 @@ var DL = (function () {
   function key(it) { return it.kind + ':' + it.id; }
   function fileOf(it) { return (it.kind === 'vod' ? 'film-' : 'ep-') + it.id + '.' + String(it.ext || 'mp4').replace(/[^a-z0-9]/gi, '').toLowerCase(); }
   function all() { return Object.keys(db).map(function (x) { return db[x]; }); }
-  function list() { return all().sort(function (a, b) { return b.created - a.created; }); }
+  function list() { return all().filter(function (e) { return !TV || e.state !== 'done' || presentOnStick[e.key] === true; }).sort(function (a, b) { return b.created - a.created; }); }
   function titleOf(it) { var n = it.name || ''; if (it.seriesName) n = (window.UI && UI.niceName ? UI.niceName(it.seriesName) : it.seriesName) + '  ' + n.split(' - ')[0] + (n.indexOf(' - ') > 0 ? ' - ' + n.split(' - ').slice(1).join(' - ') : ''); return n; }
   function track(e, got, tot) {   // smoothed speed for the "time left" estimate
     var t = now(); if (tot > 0) e.total = tot;
@@ -70,13 +78,13 @@ var DL = (function () {
     try {
       tizen.filesystem.listStorages(function (l) {
         var u = l.filter(function (s) { return s.type === 'EXTERNAL' && s.state === 'MOUNTED'; })[0];
-        if (!u) { dir = null; dirObj = null; emit(true); if (cb) cb(); return; }
+        if (!u) { dir = null; dirObj = null; presentOnStick = {}; emit(true); if (cb) cb(); return; }
         tizen.filesystem.resolve(u.label, function (d) {
           var base = String(d.toURI ? d.toURI() : d.fullPath).replace(/^file:\/\//, '');
           var sub = null; try { sub = d.resolve(FOLDER); } catch (e) { try { sub = d.createDirectory(FOLDER); } catch (e2) { sub = null; } }
-          if (!sub) { dir = null; dirObj = null; emit(true); if (cb) cb(); return; }
+          if (!sub) { dir = null; dirObj = null; presentOnStick = {}; emit(true); if (cb) cb(); return; }
           usbBase = base; dir = base + '/' + FOLDER; dirObj = sub; freeSpace(); emit(true); if (cb) cb();
-        }, function () { dir = null; emit(true); if (cb) cb(); }, 'rw');
+        }, function () { dir = null; presentOnStick = {}; emit(true); if (cb) cb(); }, 'rw');
       }, function () { if (cb) cb(); });
     } catch (e) { if (cb) cb(); }
   }
@@ -453,7 +461,7 @@ var DL = (function () {
       all().forEach(function (e) { if (e.auto) { delete db[e.key]; } }); save();   // the old copy-while-watching entries
       all().forEach(function (e) { if (e.state === 'queued') e.notBefore = 0; }); save();   // opening the app retries at once
       var go = function () { if (TV) { rmFile('selftest.bin'); rmFile('selftest-b.bin'); } reconcile(function () { recover(); sweep(); pump(); if (PHONE) poll(); emit(true); takeRequests(); }); };
-      if (TV) setInterval(takeRequests, 30000);
+      if (TV) { setInterval(takeRequests, 30000); setInterval(reportTV, 60000); }
       checkOthers(); setInterval(checkOthers, 20000);   // one tiny request every 20 s (LAN on the TV)
       if (!TV) setInterval(function () { if (watching()) checkOthers(); }, 5000);   // phone / web streaming: look every 5 s so the TV can take over quickly
       if (TV) setInterval(tvStallCheck, 10000);   // the TV's downloader can sit silent after a dropped connection (provider busy, 460): watch the byte count

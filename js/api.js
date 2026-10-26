@@ -66,7 +66,7 @@ var API = (function () {
     now: function (cmd) { var u = API.homeApi('now'); if (!u) return Promise.reject(new Error('home laptop not reachable')); return fetch(u + (cmd ? '&cmd=' + cmd : ''), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); },
     shareUrl: function (it) {   // watch along: the home laptop's one shared copy of what the TV plays
       var b, t; if (window.IS_ANDROID) { if (!window.HOME_BASE || !CONFIG.homeToken) return null; b = window.HOME_BASE.replace(/\/+$/, '') + '/api'; t = CONFIG.homeToken; } else { b = base(); t = creds().p; }
-      if (it.kind === 'live') return b + '/live/pages/' + encodeURIComponent(t) + '/' + it.id + '.m3u8';
+      if (it.kind === 'live') return b + '/live/pages/' + encodeURIComponent(t) + '/' + it.id + '.m3u8?along=1';
       return b + '/watch/' + (it.kind === 'vod' ? 'movie' : 'series') + '/pages/' + encodeURIComponent(t) + '/' + it.id + '.' + (it.ext || 'mp4');
     },
     homeApi: function (path) {   // phone: the home laptop is used for shared memory, background and "with the TV" even when streaming directly

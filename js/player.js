@@ -18,7 +18,7 @@ var PLAYER = (function () {
     try { av().close(); } catch (e) {}
     recoveryTimer = setTimeout(function () {
       recoveryTimer = 0;
-      if (generation === recoveryGeneration && st.active && st.item === item && !document.hidden) play(item, playlist, index, opts);
+      if (generation === recoveryGeneration && st.active && st.item === item && !document.hidden) { if (item.along) startAlong(null, item.alongQuality); else play(item, playlist, index, opts); }
     }, delay);
     return true;
   }
@@ -316,7 +316,7 @@ var PLAYER = (function () {
         recordFailure('playback', e);
         // TV + phone: a dropped/refused connection at the provider's video server is retried (resuming at the same spot) before giving up
         if (!st.local && window.DL && st.item && st.item.kind !== 'live' && DL.local(st.item) && /IO_|NETWORK|TIMEOUT|BAD_HTTP|Source error|CONNECTION/i.test(String(e))) { var itL = st.item, plL = st.playlist, ixL = st.index; if (st.time > 0) STORE.setPosition(itL.kind + ':' + itL.id, st.time); msg('Internet dropped, continuing from the downloaded copy...'); setTimeout(function () { if (st.item === itL) play(itL, plL, ixL); }, 400); return; }
-        if (st.item && st.item.shareUrl && !window.IS_ANDROID && !window.PREVIEW && !/IO_|NETWORK|TIMEOUT|BAD_HTTP|Source error|CONNECTION/i.test(String(e))) { var itS = Object.assign({}, st.item), plS = st.playlist, ixS = st.index; if (st.time > 0 && itS.kind !== 'live') STORE.setPosition(itS.kind + ':' + itS.id, st.time); delete itS.shareUrl; msg('The home laptop stopped sharing, playing directly...'); setTimeout(function () { play(itS, plS, ixS, { dlOk: true }); }, 500); return; }
+        if (st.item && st.item.shareUrl && !window.IS_ANDROID && !window.PREVIEW && !/IO_|NETWORK|TIMEOUT|BAD_HTTP|Source error|CONNECTION/i.test(String(e))) { msg('Shared playback error: ' + e); return; }
         if (st.item && /\b460\b/.test(String(e)) && (st.item.kind === 'live' || (st.item.busyTries || 0) < 30)) { var itB = st.item, plB = st.playlist, ixB = st.index, atB = st.time; itB.busyTries = (itB.busyTries || 0) + 1; if (atB > 0 && itB.kind !== 'live') STORE.setPosition(itB.kind + ':' + itB.id, atB);
           msg('Another device is using the stream (the account allows one). Trying again in 60 s... (' + itB.busyTries + ')'); retryPlayback(itB, plB, ixB, { dlOk: true }, 60000); return; }
         if ((!window.PREVIEW || (st.item && st.item.kind === 'live')) && canRetry(st.item) && /IO_|NETWORK|TIMEOUT|BAD_HTTP|Source error|CONNECTION/i.test(String(e))) { var itR = st.item, plR = st.playlist, ixR = st.index, atR = st.time; itR.netRetries = (itR.netRetries || 0) + 1; msg(netMsg(itR.netRetries)); if (atR > 0 && itR.kind !== 'live') STORE.setPosition(itR.kind + ':' + itR.id, atR); retryPlayback(itR, plR, ixR, { dlOk: true, keepMsg: true }, netDelay(itR.netRetries)); return; }
@@ -590,7 +590,7 @@ var PLAYER = (function () {
     }, 3000);
   }
   // ---- watch along (phone / web): show what the TV shows, in step; pause / skip here does it on the TV ----
-  var alongT = 0, alongQuiet = 0, alongGeneration = 0;
+  var alongT = 0, alongQuiet = 0, alongGeneration = 0, alongReconnectTimer = 0, alongReconnectAttempts = 0;
   var alongClient = window.WATCH_ALONG_CLIENT.create({ fetch: function (u, o) { return fetch(u, o); }, AbortController: window.AbortController });
   function currentLiveInfo() {
     if (!st.item || st.item.kind !== 'live') return null;
@@ -644,7 +644,8 @@ var PLAYER = (function () {
   }
   function startAlong(j0, profile) {
     var u = API.homeApi ? API.homeApi('along') : null; if (!u) { UI.toast('The home laptop is not reachable', 3500); return; }
-    if (st.active && st.item && !st.item.along) stop(true);
+    if (st.active) stop(true); else cancelRecovery();
+    clearTimeout(alongReconnectTimer);
     var generation = ++alongGeneration;
     profile = profile === '720p' ? '720p' : 'original';
     // Initial and automatic channel/episode changes all wait for the TV's shared acknowledgement.
@@ -662,12 +663,20 @@ var PLAYER = (function () {
         if (generation !== alongGeneration) return;
         var tv = j.tv || {}, est = (tv.pos || 0) + (tv.state === 'playing' ? Math.min(6000, Math.max(0, (j.now || 0) - (tv.at || j.now || 0))) : 0);
         if (it.kind !== 'live') STORE.setPosition(it.kind + ':' + it.id, est > 1500 ? est + 2000 : 0);
+        alongReconnectAttempts = 0;
         it.shareUrl = source; it.along = true; it.alongQuality = convert ? '720p' : 'original';
         play(it, null, -1, { dlOk: true, keepPaused: tv.state === 'paused' });
         alongQuiet = Date.now() + 5000;
         UI.toast(convert ? 'Watching along at 720p. The TV stays at its original quality.' : 'Watching along with the TV.', 4000);
       });
-    }).catch(function (e) { if (generation === alongGeneration && e.code !== 'CANCELLED') UI.toast(e.message || 'The home laptop is not reachable', 5000); });
+    }).catch(function (e) {
+      if (generation !== alongGeneration || e.code === 'CANCELLED') return;
+      UI.toast(e.message || 'The home laptop is not reachable', 5000);
+      if (e.code === 'TIMEOUT' || e.code === 'HTTP' || e.code === 'NOT_READY' || /fetch|network|connection/i.test(e.message || '')) {
+        alongReconnectAttempts++;
+        alongReconnectTimer = setTimeout(function () { if (generation === alongGeneration && !document.hidden) startAlong(null, profile); }, Math.min(30000, 5000 * alongReconnectAttempts));
+      }
+    });
   }
   // phone / web: while playing, give way as soon as the TV plays (checked every 5 s, one tiny request)
   var yieldT = 0;
@@ -694,7 +703,7 @@ var PLAYER = (function () {
   var NET_TRIES = 7; function netDelay(n) { return [3000, 8000, 30000, 45000, 60000, 60000, 60000][Math.max(0, n - 1)] || 60000; }   // the provider keeps counting a dropped stream for ~45-60 s (one connection per account): quick retries only keep the slot busy
   function netMsg(n) { var d = netDelay(n); return d >= 30000 ? 'Connection unavailable, trying again in ' + Math.round(d / 1000) + ' s... (' + n + ')' : 'Connection hiccup, reconnecting... (' + n + ')'; }
   function stop(keepUiHidden) { cancelRecovery(); st.healthySince = 0; clearInterval(stallT); nextUp(0);
-    alongGeneration++; clearInterval(alongT); st.buffering = false;
+    alongGeneration++; clearTimeout(alongReconnectTimer); clearInterval(alongT); st.buffering = false;
     clearTimeout(st.headerTimer);
     if (st.headerAbort) { st.headerAbort.abort(); st.headerAbort = null; }
     if (st.casting && window.CAST && window.CAST.active) { window.CAST.stop(); } st.casting = false;

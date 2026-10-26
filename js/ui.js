@@ -508,7 +508,7 @@ var UI = (function () {
       tvSeenAt = seen;
       var fresh = tvInfo.events.filter(function (e) { return e.at > seen && (j.now || Date.now()) - e.at <= 86400000; });
       var newest = fresh.length ? fresh[fresh.length - 1].at : 0;
-      if (newest && newest !== tvToastedAt) { tvToastedAt = newest; tvSeenAt = newest; var e = fresh[fresh.length - 1]; toast((e.failed ? 'The TV could not download ' : 'Ready on the TV: ') + niceName(e.title), 6000); try { localStorage.setItem('doortv.tvseen', String(newest)); } catch (x) {} tvInfo.shown = newest; }   // said once; afterwards it is simply in Downloads > On the TV
+      if (newest && newest !== tvToastedAt) { tvToastedAt = newest; tvSeenAt = newest; var e = fresh[fresh.length - 1]; toast((e.failed ? 'The TV could not download ' : 'Ready on the TV: ') + niceName(e.title), 6000); try { localStorage.setItem('doortv.tvseen', String(newest)); } catch (x) {} tvInfo.shown = 0; }   // said once; afterwards it is simply in Downloads > On the TV
       var c = current(); if (c && c.dom === 'screen-home' && c.render) c.render();
     }).catch(function () {});
   }
@@ -891,7 +891,7 @@ var UI = (function () {
         { label: 'Video position correction', val: String(CONFIG.posFactor || 'auto'), run: function () { var o = ['auto', '1', '1.5', '2']; CONFIG.posFactor = o[(o.indexOf(String(CONFIG.posFactor || 'auto')) + 1) % o.length]; saveConfig(CONFIG); s.render(); toast('Video position correction: ' + CONFIG.posFactor + ' (test with a channel preview)'); } },
         { label: 'Reset remembered aspect ratios', val: '', run: function () { try { localStorage.removeItem('doortv.aspect'); } catch (e) {} toast('Aspect memory cleared'); } },
         { label: 'Clear cache and reload lists', val: '', run: function () { API.clearCache(); toast('Cache cleared'); } },
-        { label: 'Los Bebos TV version', val: '1.9.31', run: function () {} }
+        { label: 'Los Bebos TV version', val: '1.9.33', run: function () {} }
       ].filter(function (o) { return !o.hide; });
     }
     function editField(field) {

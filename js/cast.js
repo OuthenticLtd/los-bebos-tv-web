@@ -28,7 +28,7 @@
     else if (c.cmd === 'seekTo' && PLAYER.seekTo) PLAYER.seekTo(Number(c.pos) || 0);
     else if (c.cmd === 'share' && c.item && c.path) {   // a phone watches along: move onto the laptop's shared copy at the same spot (the provider sees one stream)
       var s0 = PLAYER.status(), cur = PLAYER.currentKey ? PLAYER.currentKey() : null;
-      if (s0.active && cur === c.item.kind + ':' + c.item.id && !(PLAYER.isLocal && PLAYER.isLocal())) {   // a copy from the stick stays as it is (it holds no stream)
+      if (s0.active && !s0.shared && cur === c.item.kind + ':' + c.item.id && !(PLAYER.isLocal && PLAYER.isLocal())) {   // a copy from the stick stays as it is (it holds no stream)
         if (s0.time > 0 && c.item.kind !== 'live') STORE.setPosition(cur, s0.time);
         PLAYER.play(Object.assign({}, c.item, { shareUrl: R() + c.path }), PLAYER.playlistNow ? PLAYER.playlistNow() : null, PLAYER.indexNow ? PLAYER.indexNow() : -1, { dlOk: true, keepPaused: s0.paused });
         UI.toast('Watching along with the phone', 3000);
