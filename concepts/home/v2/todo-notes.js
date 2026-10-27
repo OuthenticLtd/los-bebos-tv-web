@@ -1,6 +1,8 @@
 (function(){
   var key='';try{var fragment=new URLSearchParams(location.hash.slice(1));key=fragment.get('tvnotes')||localStorage.getItem('tvhome.todo.key')||'';if(key){localStorage.setItem('tvhome.todo.key',key);history.replaceState(null,'',location.pathname+location.search);}}catch(e){}
   if(!key||!window.TV_HOME_NOTES_RENDER)return;
+  // Paired notes are edited in Microsoft To Do, not the old browser-local demo form.
+  if(location.search.includes('phone')){location.replace('https://to-do.office.com/tasks/');return;}
   var endpoint='https://anitka-macbook.tailc505f3.ts.net/tv-notes',busy=false,last=null;
   try{var cached=JSON.parse(localStorage.getItem('tvhome.todo.cache')||'null');if(cached&&cached.key===key&&cached.data&&Array.isArray(cached.data.tasks))last=cached.data;}catch(e){}
   window.TV_HOME_NOTES_RENDER(last?Object.assign({},last,{stale:true}):{tasks:[],loading:true});
