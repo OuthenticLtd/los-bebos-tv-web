@@ -557,3 +557,10 @@ body.playing .home-status { display: none; }
 .portrait .brand { position: relative; z-index: 1; }
 .portrait .clock { white-space: nowrap; font-size: 26px; }
 .portrait .route-chip { font-size: 30px; padding: 8px 12px 8px 22px; }
+/* portrait: "On the TV now" sits as one compact row in the photo's dark fade, right above the menu,
+   instead of a fixed distance from the bottom (on shorter phone screens that covered Downloads and Settings) */
+.portrait #screen-home > .along-card { top: 506px; bottom: auto; left: 70px; right: 70px; width: auto; padding: 14px 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 20px; align-items: center; }
+.portrait .ac-label { grid-column: 1; width: auto; margin: 0; font-size: 20px; }
+.portrait .ac-title { grid-column: 1; width: auto; font-size: 34px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.portrait .ac-sub { grid-column: 1; width: auto; font-size: 24px; margin: 0; }
+.portrait .ac-btn { grid-column: 2; grid-row: 1 / span 3; margin: 0; font-size: 30px; padding: 14px 26px; white-space: nowrap; }
