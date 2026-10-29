@@ -67,7 +67,7 @@
     if (!window.IS_ANDROID && !window.PREVIEW) { var tv0 = null; try { tv0 = localStorage.getItem('doortv.routeDefaultTV'); } catch (e) {} if (!tv0) { CONFIG.viaHome = false; saveConfig(CONFIG); try { localStorage.setItem('doortv.routeDefaultTV', 'direct'); } catch (e) {} } }   // TV default: direct
     if (window.IS_ANDROID) { var rv = null; try { rv = localStorage.getItem('doortv.routeDefault'); } catch (e) {} if (!rv) { CONFIG.viaHome = true; saveConfig(CONFIG); try { localStorage.setItem('doortv.routeDefault', 'home'); } catch (e) {} } }
     fit(); registerKeys(); PLAYER.init(); UI.init();
-    BG.apply();
+    BG.apply(); if (window.TODO_WALL) TODO_WALL.start();
     loadHomeBase().then(function () { return STORE.sync(); }).then(function (ok) { BG.sync(); return ok; }).then(function (ok) { if (ok && UI.current() && UI.current().render) UI.current().render(); }); clock(); setInterval(clock, 30000); status();
     // TV only: stop when the app is sent to the background. The web keeps playing in another tab; the phone stops natively (onStop).
     if (!window.PREVIEW && !window.IS_ANDROID) document.addEventListener('visibilitychange', function () { if (document.hidden && PLAYER.isActive()) PLAYER.stop(); });

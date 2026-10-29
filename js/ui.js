@@ -891,7 +891,7 @@ var UI = (function () {
         { label: 'Video position correction', val: String(CONFIG.posFactor || 'auto'), run: function () { var o = ['auto', '1', '1.5', '2']; CONFIG.posFactor = o[(o.indexOf(String(CONFIG.posFactor || 'auto')) + 1) % o.length]; saveConfig(CONFIG); s.render(); toast('Video position correction: ' + CONFIG.posFactor + ' (test with a channel preview)'); } },
         { label: 'Reset remembered aspect ratios', val: '', run: function () { try { localStorage.removeItem('doortv.aspect'); } catch (e) {} toast('Aspect memory cleared'); } },
         { label: 'Clear cache and reload lists', val: '', run: function () { API.clearCache(); toast('Cache cleared'); } },
-        { label: 'Los Bebos TV version', val: '1.9.33', run: function () {} }
+        { label: 'Los Bebos TV version', val: '1.9.34', run: function () {} }
       ].filter(function (o) { return !o.hide; });
     }
     function editField(field) {

@@ -54,7 +54,7 @@
       } else if (c && c.seq < last) { last = c.seq; }   // the laptop restarted: count from its number again
       first = false;
       along = !!(c && c.along);
-      if (Date.now() - lastReport > (along ? 1500 : 5000) && PLAYER.isActive()) { lastReport = Date.now(); report(last); }
+      if (Date.now() - lastReport > (along ? 1500 : 5000)) { lastReport = Date.now(); report(last); }
       setTimeout(poll, along ? 1500 : 3000);   // someone watches along: report often so they stay in step
     };
     x.onerror = x.ontimeout = function () { setTimeout(poll, 5000); };

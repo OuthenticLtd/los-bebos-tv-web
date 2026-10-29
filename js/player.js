@@ -466,7 +466,7 @@ var PLAYER = (function () {
     } else openStream();
     function openStream() {
     if (!st.active || st.item !== item) return;
-    if (window.DL && !loc) DL.playing(item);   // a stream: free the provider's one connection from a TV download BEFORE opening
+    if (window.DL) DL.playing(item);   // a stream: free the provider's one connection from a TV download BEFORE opening
     try {
       a.open(url);
       try { a.setStreamingProperty('USER_AGENT', 'Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) DoorTV'); } catch (e) {}

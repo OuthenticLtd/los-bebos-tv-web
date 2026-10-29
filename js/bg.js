@@ -3,7 +3,18 @@
 var BG = (function () {
   function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function set(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  // Private TV package may carry an owner-selected To Do attachment as its
+  // local default. No Microsoft credentials or laptop calls are needed here.
+  function seed() {
+    var photo=window.TV_TODO_BACKGROUND;
+    if (!photo || !photo.src || !photo.version) return;
+    if (get('doortv.todo.background.version') !== photo.version) {
+      if (set('doortv.bg', photo.src)) { set('doortv.todo.background.version', photo.version); set('doortv.todo.background.active', '1'); }
+    }
+  }
   function apply() {
+    seed();
+    if (window.TODO_WALL && TODO_WALL.active()) return;   // live To Do photos own the background while they exist
     var el = document.getElementById('home-bg') || document.getElementById('screen-home'); if (!el) return;
     var d = get('doortv.bg');
     if (!d) { el.classList.remove('in'); el.style.backgroundImage = ''; return; }   // no photo: the stylesheet's dark gradient stays
@@ -20,6 +31,7 @@ var BG = (function () {
   }
   function blobToData(blob) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = rej; r.readAsDataURL(blob); }); }
   function sync() {
+    seed(); if (get('doortv.todo.background.active') === '1') { apply(); return Promise.resolve(); }
     var u = urls(); if (!u) return Promise.resolve();
     return timed(fetch(u.ver, { cache: 'no-store' }), 2500).then(function (r) { return r.json(); }).then(function (j) {
       var have = Number(get('doortv.bgv') || 0);
@@ -39,7 +51,7 @@ var BG = (function () {
         var sc = Math.max(1920 / img.width, 1080 / img.height), w = img.width * sc, h = img.height * sc;
         g.drawImage(img, (1920 - w) / 2, (1080 - h) / 2, w, h); URL.revokeObjectURL(url);
         var q = 0.82, d = c.toDataURL('image/jpeg', q); while (d.length > 450000 && q > 0.4) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
-        set('doortv.bg', d); apply();
+        set('doortv.todo.background.active', null); set('doortv.bg', d); apply();
         var u = urls(); if (!u) { if (done) done('Saved on this device'); return; }
         fetch(u.img, { method: 'POST', body: d, headers: { 'Content-Type': 'text/plain' } }).then(function (r) { return r.json(); }).then(function (j) { if (j.v) set('doortv.bgv', String(j.v)); if (done) done('Background changed. The TV takes it the next time it starts at home.'); }).catch(function () { if (done) done('Saved here; could not reach the home laptop for the TV'); });
       };
@@ -48,6 +60,7 @@ var BG = (function () {
     inp.click();
   }
   function reset(done) {
+    seed(); set('doortv.todo.background.active', null);
     set('doortv.bg', null); set('doortv.bgv', null); apply();
     var u = urls(); if (u) fetch(u.img + '&reset=1', { cache: 'no-store' }).catch(function () {});
     if (done) done('Back to the dark background');

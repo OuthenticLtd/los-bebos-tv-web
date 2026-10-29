@@ -154,7 +154,7 @@ var DL = (function () {
 
   // ---------------- queue ----------------
   function busy() { return all().some(function (e) { return e.state === 'downloading'; }); }
-  function watching() { return !!(window.PLAYER && PLAYER.isActive && PLAYER.isActive() && !(PLAYER.isLocal && PLAYER.isLocal())); }   // a copy playing uses no stream
+  function watching() { return !!(window.PLAYER && PLAYER.isActive && PLAYER.isActive() && (TV || !(PLAYER.isLocal && PLAYER.isLocal()))); }   // a copy playing uses no stream
   // downloads on the other devices (reported to the home laptop): the first one running has priority everywhere
   var others = null, othersAt = 0, tvNow = null;
   function me() { return TV ? 'tv' : PHONE ? 'phone' : 'web'; }
@@ -519,7 +519,18 @@ var DL = (function () {
     playing: function (it) {
       var e = it ? db[key(it)] : null; if (e) { e.touched = now(); save(); }
       if (!TV && !PHONE) return;
-      if (it && (it.localUrl || (it.kind !== 'live' && e && e.state === 'done'))) return;   // a copy on the stick / phone uses no stream: the download keeps going
+      var localPlayback = !!(it && (it.localUrl || (it.kind !== 'live' && e && e.state === 'done')));
+      if (localPlayback && !TV) return;
+      if (TV && localPlayback) {
+        // Reading a large film and writing a download compete for the same USB stick.
+        // Pause rather than cancel: local playback needs no provider slot, so keep partial bytes.
+        all().forEach(function (x) { if (x.state !== 'downloading' || x.paused) return;
+          try { if (x.via === 'laptop' && x.phase === 'laptop') lapCall(x, 'pause');
+            else if (x.resume) tvStop(x); else tizen.download.pause(x.dlId);
+            x.paused = true; ev(x, 'paused to give USB playback priority');
+          } catch (er) { x.err = 'Could not pause background download for playback'; }
+        }); save(); emit(true); return;
+      }
       all().forEach(function (x) { if (x.state === 'downloading' && !x.paused) { try {
         if (TV && x.via !== 'laptop') {   // the TV's paused download keeps the provider's only connection for good (measured 12+ min): drop it, it starts again after watching
           tvStop(x); try { tizen.download.cancel(x.dlId); } catch (er2) {} ev(x, 'stopped for watching (a paused download keeps the provider busy), starts again afterwards');
